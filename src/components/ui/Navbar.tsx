@@ -12,7 +12,7 @@ type SectionKey =
   | "relatorios";
 
 const SECTIONS: { key: SectionKey; label: string; path?: string }[] = [
-  { key: "hero", label: "Início", path: "/" },
+  { key: "hero", label: "Início", path: "/dashboard" },
   { key: "pacientes", label: "Pacientes", path: "/pacientes" },
   { key: "medicos", label: "Médicos", path: "/medicos" },
   { key: "consultas", label: "Consultas", path: "/consultas" },

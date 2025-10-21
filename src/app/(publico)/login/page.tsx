@@ -16,8 +16,8 @@ export default function LoginPage() {
   });
 
   useEffect(() => {
-    if (searchParams.get('registered') === 'true') {
-      setSuccessMessage('Conta criada com sucesso! Faça login para continuar.');
+    if (searchParams.get("registered") === "true") {
+      setSuccessMessage("Conta criada com sucesso! Faça login para continuar.");
     }
   }, [searchParams]);
 
@@ -42,7 +42,7 @@ export default function LoginPage() {
       // Por enquanto, apenas simular um delay
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      router.push("/consultas");
+      router.push("/dashboard");
     } catch (err) {
       console.error(err);
       setError("Email ou senha incorretos");
@@ -108,7 +108,9 @@ export default function LoginPage() {
           </div>
 
           {successMessage && (
-            <div className="text-green-600 text-sm text-center">{successMessage}</div>
+            <div className="text-green-600 text-sm text-center">
+              {successMessage}
+            </div>
           )}
 
           {error && (
@@ -149,7 +151,10 @@ export default function LoginPage() {
         </form>
 
         <div className="flex flex-col space-y-2 text-sm text-center">
-          <Link href="/registro" className="font-medium text-blue-600 hover:text-blue-500">
+          <Link
+            href="/registro"
+            className="font-medium text-blue-600 hover:text-blue-500"
+          >
             Criar uma nova conta
           </Link>
           <a href="#" className="font-medium text-blue-600 hover:text-blue-500">
