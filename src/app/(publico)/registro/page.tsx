@@ -1,51 +1,49 @@
 "use client";
 
-import { useState, FormEvent, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
   const [formData, setFormData] = useState({
+    nome: "",
     email: "",
     password: "",
+    confirmPassword: "",
   });
-
-  useEffect(() => {
-    if (searchParams.get('registered') === 'true') {
-      setSuccessMessage('Conta criada com sucesso! Faça login para continuar.');
-    }
-  }, [searchParams]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
+    if (formData.password !== formData.confirmPassword) {
+      setError("As senhas não coincidem");
+      setLoading(false);
+      return;
+    }
+
     try {
       // TODO: Integrar com o backend
-      // Exemplo de como será a integração:
-      // const response = await fetch('/api/auth/login', {
+      // const response = await fetch('/api/auth/register', {
       //   method: 'POST',
       //   headers: { 'Content-Type': 'application/json' },
       //   body: JSON.stringify(formData)
       // })
 
-      // if (!response.ok) throw new Error('Credenciais inválidas')
+      // if (!response.ok) throw new Error('Erro ao criar conta')
       // const data = await response.json()
-      // localStorage.setItem('token', data.token)
 
-      // Por enquanto, apenas simular um delay
+      // Simular delay
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      router.push("/consultas");
+      router.push("/login?registered=true");
     } catch (err) {
       console.error(err);
-      setError("Email ou senha incorretos");
+      setError("Erro ao criar conta. Por favor, tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -67,12 +65,27 @@ export default function LoginPage() {
             🏥 Hospital Service
           </h1>
           <h2 className="mt-6 text-center text-2xl font-semibold text-gray-900">
-            Entre na sua conta
+            Crie sua conta
           </h2>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm -space-y-px">
+            <div>
+              <label htmlFor="nome" className="sr-only">
+                Nome completo
+              </label>
+              <input
+                id="nome"
+                name="nome"
+                type="text"
+                required
+                value={formData.nome}
+                onChange={handleChange}
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                placeholder="Nome completo"
+              />
+            </div>
             <div>
               <label htmlFor="email" className="sr-only">
                 Email
@@ -85,7 +98,7 @@ export default function LoginPage() {
                 required
                 value={formData.email}
                 onChange={handleChange}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                 placeholder="Email"
               />
             </div>
@@ -97,19 +110,29 @@ export default function LoginPage() {
                 id="password"
                 name="password"
                 type="password"
-                autoComplete="current-password"
                 required
                 value={formData.password}
                 onChange={handleChange}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                 placeholder="Senha"
               />
             </div>
+            <div>
+              <label htmlFor="confirmPassword" className="sr-only">
+                Confirme a senha
+              </label>
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                required
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                placeholder="Confirme a senha"
+              />
+            </div>
           </div>
-
-          {successMessage && (
-            <div className="text-green-600 text-sm text-center">{successMessage}</div>
-          )}
 
           {error && (
             <div className="text-red-500 text-sm text-center">{error}</div>
@@ -143,18 +166,19 @@ export default function LoginPage() {
                   ></path>
                 </svg>
               ) : null}
-              {loading ? "Entrando..." : "Entrar"}
+              {loading ? "Criando conta..." : "Criar conta"}
             </button>
           </div>
         </form>
 
-        <div className="flex flex-col space-y-2 text-sm text-center">
-          <Link href="/registro" className="font-medium text-blue-600 hover:text-blue-500">
-            Criar uma nova conta
+        <div className="text-sm text-center">
+          Já tem uma conta?{" "}
+          <Link
+            href="/login"
+            className="font-medium text-blue-600 hover:text-blue-500"
+          >
+            Faça login
           </Link>
-          <a href="#" className="font-medium text-blue-600 hover:text-blue-500">
-            Esqueceu sua senha?
-          </a>
         </div>
       </div>
     </div>
