@@ -35,6 +35,25 @@ export default function InternacoesList() {
       setInternacoes(data);
     } catch (error) {
       console.error("Erro ao carregar internações:", error);
+      // Fallback mock data
+      setInternacoes([
+        {
+          id: 1,
+          paciente: { id: 1, nome: "João da Silva" },
+          medico: { id: 2, nome: "Dra. Maria Santos" },
+          dataInternacao: "2025-10-15T09:00:00Z",
+          motivo: "Pneumonia",
+          status: "ATIVO",
+        },
+        {
+          id: 2,
+          paciente: { id: 2, nome: "Ana Oliveira" },
+          medico: { id: 3, nome: "Dr. Felipe Lima" },
+          dataInternacao: "2025-10-10T14:00:00Z",
+          motivo: "Cirurgia",
+          status: "ALTA",
+        },
+      ] as Internacao[]);
     } finally {
       setLoading(false);
     }

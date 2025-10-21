@@ -55,6 +55,11 @@ export function InternacaoForm({ initialData }: InternacaoFormProps) {
       setPacientes(data);
     } catch (error) {
       console.error("Erro ao carregar pacientes:", error);
+      // fallback mock
+      setPacientes([
+        { id: 1, nome: "João da Silva" },
+        { id: 2, nome: "Ana Oliveira" },
+      ]);
     }
   };
 
@@ -66,6 +71,11 @@ export function InternacaoForm({ initialData }: InternacaoFormProps) {
       setMedicos(data);
     } catch (error) {
       console.error("Erro ao carregar médicos:", error);
+      // fallback mock
+      setMedicos([
+        { id: 1, nome: "Dr. Carlos Pereira", especialidade: "Clínica" },
+        { id: 2, nome: "Dra. Maria Santos", especialidade: "Pediatria" },
+      ]);
     }
   };
 
