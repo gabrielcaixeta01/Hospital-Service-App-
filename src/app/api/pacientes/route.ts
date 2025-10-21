@@ -1,0 +1,45 @@
+import { NextResponse } from "next/server";
+
+const PACIENTES = [
+  {
+    id: 1,
+    nome: "João da Silva",
+    dataNascimento: "1980-05-12",
+    sexo: "M",
+    telefone: "(11) 99999-0001",
+    email: "joao@example.com",
+    observacoes: "Paciente com histórico de hipertensão",
+  },
+  {
+    id: 2,
+    nome: "Ana Oliveira",
+    dataNascimento: "1992-11-03",
+    sexo: "F",
+    telefone: "(11) 99999-0002",
+    email: "ana@example.com",
+    observacoes: "",
+  },
+  {
+    id: 3,
+    nome: "Pedro Gomes",
+    dataNascimento: "1975-07-21",
+    sexo: "M",
+    telefone: "(11) 99999-0003",
+    email: "pedro@example.com",
+    observacoes: "Alérgico a penicilina",
+  },
+];
+
+export async function GET() {
+  return NextResponse.json(PACIENTES);
+}
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const newPaciente = {
+    id: PACIENTES.length + 1,
+    ...body,
+  };
+  PACIENTES.push(newPaciente);
+  return NextResponse.json(newPaciente, { status: 201 });
+}
