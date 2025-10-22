@@ -1,36 +1,128 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Hospital Service App — Frontend
 
-## Getting Started
+Aplicação web para gestão hospitalar construída com Next.js (App Router), TypeScript e Tailwind CSS. Inclui CRUD de Pacientes, Médicos, Consultas e Internações, relatórios simples e rotas de API mockadas para desenvolvimento local.
 
-First, run the development server:
+> Status (22/10/2025): MVP funcional com CRUD completo para consultas, pacientes e médicos; internações e relatórios básicos; autenticação pública simples. Uploads por paciente em progresso.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## ✨ Funcionalidades
+
+- Autenticação (pública): login e registro básicos
+- Dashboard com atalhos principais
+- Pacientes: listar, criar, editar e excluir
+- Médicos: listar, criar, editar e excluir
+- Consultas: agendar (novo), visualizar, editar, cancelar/excluir
+- Internações: listar, criar e editar
+- Relatórios: agenda do médico e leitos (estático)
+- Uploads: página por paciente (estrutura criada)
+- API mock local em `/api/*` para desenvolvimento
+
+## 🧱 Tecnologias
+
+- Next.js 15 (App Router)
+- React 19
+- TypeScript
+- Tailwind CSS
+- ESLint e eslint-config-next
+- React Icons
+
+## 🗂️ Estrutura de pastas (principal)
+
+```
+src/app
+	(publico)/
+		login/
+		registro/
+	(protected)/
+		dashboard/
+		pacientes/
+			page.tsx        # lista
+			novo/           # criação
+			[id]/           # detalhe/edição
+			components/
+		medicos/
+			page.tsx
+			novo/
+			[id]/
+			components/
+		consultas/
+			page.tsx
+			novo/
+			[id]/
+		internacoes/
+			page.tsx
+			novo/
+			[id]/
+			components/
+		relatorios/
+			page.tsx
+			agenda-medico/
+			leitos/
+		uploads/
+			[pacientId]/
+	api/
+		pacientes/ (GET, POST)
+		pacientes/[id]/ (GET, PUT, DELETE)
+		medicos/ e medicos/[id]/
+		consultas/ e consultas/[id]/
+		internacoes/ e internacoes/[id]/
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🚀 Como rodar localmente
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Instale as dependências: `npm install`
+2. Ambiente de desenvolvimento: `npm run dev`
+3. Acesse em: http://localhost:3000
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Build e produção:
 
-## Learn More
+- Build: `npm run build`
+- Produção: `npm start` (após o build)
 
-To learn more about Next.js, take a look at the following resources:
+Scripts disponíveis:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `dev` — inicia o servidor de desenvolvimento
+- `build` — gera o build de produção
+- `start` — inicia o servidor com o build gerado
+- `lint` — executa o ESLint
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🔌 API Mock (desenvolvimento)
 
-## Deploy on Vercel
+As rotas em `src/app/api/*` simulam persistência em memória durante a sessão de desenvolvimento. Disponível para recursos:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Pacientes: `/api/pacientes`, `/api/pacientes/[id]`
+- Médicos: `/api/medicos`, `/api/medicos/[id]`
+- Consultas: `/api/consultas`, `/api/consultas/[id]`
+- Internações: `/api/internacoes`, `/api/internacoes/[id]`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Operações suportadas (por recurso):
+
+- GET (lista e por id)
+- POST (criação, nas coleções)
+- PUT (atualização, por id)
+- DELETE (exclusão, por id)
+
+> Observação: como os dados vivem em memória, qualquer reinício do servidor de desenvolvimento reseta o estado.
+
+## 🔐 Rotas
+
+- Público: `(publico)/login`, `(publico)/registro`
+- Protegido: `(protected)/*` — dashboard, pacientes, médicos, consultas, internações, relatórios, uploads
+
+## 📝 Convenções
+
+- Linguagem: TypeScript
+- UI: Tailwind CSS (classes utilitárias)
+- App Router (diretório `app`), componentes client quando necessário (hooks)
+- Padrão de fetch: tenta `/api/*` e pode fazer fallback para mocks locais quando aplicável
+
+## 🛣️ Próximos passos (roadmap)
+
+- Finalizar módulo de uploads por paciente (UI + integração)
+- Melhorar autenticação (tokens e proteção real de rotas)
+- Validações e máscaras (telefone, CRM, etc.)
+- Testes (unitários e e2e)
+- Integração com API real e remoção gradativa dos mocks
+
+---
+
+Se tiver dúvidas ou sugestões, abra uma issue ou envie um PR. 😊
