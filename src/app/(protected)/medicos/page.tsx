@@ -17,6 +17,16 @@ export default function Page() {
   useEffect(() => {
     const fetchMedicos = async () => {
       try {
+        // FUTURA INTEGRAÇÃO COM BACKEND (chamada direta):
+        // const api = process.env.NEXT_PUBLIC_API_URL;
+        // const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        // const res = await fetch(`${api}/medicos`, {
+        //   headers: {
+        //     'Content-Type': 'application/json',
+        //     ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        //   },
+        //   cache: 'no-store',
+        // });
         const res = await fetch("/api/medicos");
         if (!res.ok) throw new Error("Falha");
         const data = await res.json();

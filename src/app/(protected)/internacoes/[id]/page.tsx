@@ -25,6 +25,16 @@ export default function EditarInternacao({ params }: EditarInternacaoProps) {
   useEffect(() => {
     const fetchInternacao = async () => {
       try {
+        // FUTURA INTEGRAÇÃO COM BACKEND (chamada direta):
+        // const api = process.env.NEXT_PUBLIC_API_URL;
+        // const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        // const res = await fetch(`${api}/internacoes/${params.id}`, {
+        //   headers: {
+        //     'Content-Type': 'application/json',
+        //     ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        //   },
+        //   cache: 'no-store',
+        // });
         const response = await fetch(`/api/internacoes/${params.id}`);
         if (!response.ok) throw new Error("Falha ao carregar internação");
         const data = await response.json();

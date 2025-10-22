@@ -22,6 +22,16 @@ export default function Page({ params }: { params: { id: string } }) {
   useEffect(() => {
     const fetchMedico = async () => {
       try {
+        // FUTURA INTEGRAÇÃO COM BACKEND (chamada direta):
+        // const api = process.env.NEXT_PUBLIC_API_URL;
+        // const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        // const res = await fetch(`${api}/medicos/${params.id}`, {
+        //   headers: {
+        //     'Content-Type': 'application/json',
+        //     ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        //   },
+        //   cache: 'no-store',
+        // });
         const res = await fetch(`/api/medicos/${params.id}`);
         if (!res.ok) throw new Error("not found");
         const data = await res.json();
@@ -55,6 +65,17 @@ export default function Page({ params }: { params: { id: string } }) {
     if (!medico) return;
     setSaving(true);
     try {
+      // FUTURA INTEGRAÇÃO COM BACKEND (chamada direta):
+      // const api = process.env.NEXT_PUBLIC_API_URL;
+      // const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      // const res = await fetch(`${api}/medicos/${params.id}`, {
+      //   method: 'PUT',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //     ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      //   },
+      //   body: JSON.stringify(medico),
+      // });
       const res = await fetch(`/api/medicos/${params.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -74,6 +95,15 @@ export default function Page({ params }: { params: { id: string } }) {
   const handleDelete = async () => {
     if (!confirm("Deseja realmente excluir este médico?")) return;
     try {
+      // FUTURA INTEGRAÇÃO COM BACKEND (chamada direta):
+      // const api = process.env.NEXT_PUBLIC_API_URL;
+      // const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      // const res = await fetch(`${api}/medicos/${params.id}`, {
+      //   method: 'DELETE',
+      //   headers: {
+      //     ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      //   },
+      // });
       const res = await fetch(`/api/medicos/${params.id}`, {
         method: "DELETE",
       });

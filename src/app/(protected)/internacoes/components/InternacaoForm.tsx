@@ -49,6 +49,16 @@ export function InternacaoForm({ initialData }: InternacaoFormProps) {
 
   const fetchPacientes = async () => {
     try {
+      // FUTURA INTEGRAÇÃO COM BACKEND (chamada direta):
+      // const api = process.env.NEXT_PUBLIC_API_URL;
+      // const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      // const res = await fetch(`${api}/pacientes`, {
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //     ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      //   },
+      //   cache: 'no-store',
+      // });
       const response = await fetch("/api/pacientes");
       if (!response.ok) throw new Error("Falha ao carregar pacientes");
       const data = await response.json();
@@ -65,6 +75,16 @@ export function InternacaoForm({ initialData }: InternacaoFormProps) {
 
   const fetchMedicos = async () => {
     try {
+      // FUTURA INTEGRAÇÃO COM BACKEND (chamada direta):
+      // const api = process.env.NEXT_PUBLIC_API_URL;
+      // const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      // const res = await fetch(`${api}/medicos`, {
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //     ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      //   },
+      //   cache: 'no-store',
+      // });
       const response = await fetch("/api/medicos");
       if (!response.ok) throw new Error("Falha ao carregar médicos");
       const data = await response.json();
@@ -84,6 +104,20 @@ export function InternacaoForm({ initialData }: InternacaoFormProps) {
     setLoading(true);
 
     try {
+      // FUTURA INTEGRAÇÃO COM BACKEND (chamada direta):
+      // const api = process.env.NEXT_PUBLIC_API_URL;
+      // const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      // const url = initialData
+      //   ? `${api}/internacoes/${initialData.pacienteId}`
+      //   : `${api}/internacoes`;
+      // const response = await fetch(url, {
+      //   method: initialData ? 'PUT' : 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //     ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      //   },
+      //   body: JSON.stringify(formData),
+      // });
       const url = initialData
         ? `/api/internacoes/${initialData.pacienteId}`
         : "/api/internacoes";

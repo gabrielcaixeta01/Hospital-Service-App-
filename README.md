@@ -103,6 +103,26 @@ Operações suportadas (por recurso):
 
 > Observação: como os dados vivem em memória, qualquer reinício do servidor de desenvolvimento reseta o estado.
 
+### 🔗 Integração com Backend (futuro)
+
+Todos os arquivos de API e páginas client já possuem código **comentado** mostrando como fazer a integração direta com um backend real:
+
+1. **Crie um arquivo `.env.local`** na raiz do projeto com as variáveis de ambiente:
+
+```bash
+API_URL=http://localhost:8080
+NEXT_PUBLIC_API_URL=http://localhost:8080
+```
+
+2. **Descomente os blocos** nos arquivos:
+
+   - **API Routes** (`src/app/api/*/route.ts`): substituem mocks por proxy para o backend.
+   - **Client Pages** (ex: `src/app/(protected)/pacientes/[id]/page.tsx`): fazem fetch direto ao backend com `NEXT_PUBLIC_API_URL` e tokens (localStorage/cookies).
+
+3. **Autenticação**: os exemplos incluem padrões para adicionar `Authorization: Bearer <token>` nos headers quando disponível.
+
+Veja o arquivo `.env.example` para referência de variáveis de ambiente.
+
 ## 🔐 Rotas
 
 - Público: `(publico)/login`, `(publico)/registro`
