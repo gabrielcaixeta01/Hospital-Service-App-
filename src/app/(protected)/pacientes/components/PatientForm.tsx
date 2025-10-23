@@ -11,6 +11,7 @@ interface PatientFormProps {
     sexo?: string;
     telefone?: string;
     email?: string;
+    cpf?: string;
     observacoes?: string;
   };
 }
@@ -24,6 +25,7 @@ export default function PatientForm({ initialData }: PatientFormProps) {
     sexo: "",
     telefone: "",
     email: "",
+    cpf: "",
     observacoes: "",
   });
 
@@ -35,6 +37,7 @@ export default function PatientForm({ initialData }: PatientFormProps) {
         sexo = "",
         telefone = "",
         email = "",
+        cpf = "",
         observacoes = "",
       } = initialData;
       setForm((f) => ({
@@ -44,6 +47,7 @@ export default function PatientForm({ initialData }: PatientFormProps) {
         sexo,
         telefone,
         email,
+        cpf,
         observacoes,
       }));
     }
@@ -63,7 +67,11 @@ export default function PatientForm({ initialData }: PatientFormProps) {
     setLoading(true);
     try {
       // TODO: Substituir por chamada real à API
+      // exemplo de payload que será enviado ao backend
+      const payload = { ...form };
+      // Simula chamada
       await new Promise((res) => setTimeout(res, 800));
+      console.log("Simulated submit payload:", payload);
       router.push("/pacientes");
     } catch (err) {
       console.error(err);
@@ -83,6 +91,17 @@ export default function PatientForm({ initialData }: PatientFormProps) {
           <input
             name="nome"
             value={form.nome}
+            onChange={handleChange}
+            required
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700">CPF</label>
+          <input
+            name="cpf"
+            value={form.cpf}
             onChange={handleChange}
             required
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2"

@@ -11,6 +11,7 @@ interface Paciente {
   telefone?: string;
   email?: string;
   observacoes?: string;
+  cpf?: string;
 }
 
 export default function Page({ params }: { params: { id: string } }) {
@@ -46,6 +47,7 @@ export default function Page({ params }: { params: { id: string } }) {
           sexo: "M",
           telefone: "(11) 99999-0000",
           email: "exemplo@email.com",
+          cpf: "000.000.000-00",
           observacoes: "",
         });
       } finally {
@@ -182,6 +184,19 @@ export default function Page({ params }: { params: { id: string } }) {
                 <input
                   name="nome"
                   value={paciente.nome}
+                  onChange={handleChange}
+                  required
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  CPF
+                </label>
+                <input
+                  name="cpf"
+                  value={paciente.cpf || ""}
                   onChange={handleChange}
                   required
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"

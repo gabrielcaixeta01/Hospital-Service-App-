@@ -9,6 +9,7 @@ interface Paciente {
   dataNascimento?: string;
   telefone?: string;
   email?: string;
+  cpf?: string;
 }
 
 export default function Page() {
@@ -39,14 +40,18 @@ export default function Page() {
           {
             id: 1,
             nome: "João da Silva",
+            cpf: "123.456.789-00",
             dataNascimento: "1980-05-12",
             telefone: "(11) 99999-0001",
+            email: "joao@example.com",
           },
           {
             id: 2,
             nome: "Ana Oliveira",
+            cpf: "987.654.321-00",
             dataNascimento: "1992-11-03",
             telefone: "(11) 99999-0002",
+            email: "ana@example.com",
           },
         ]);
       } finally {
@@ -88,6 +93,9 @@ export default function Page() {
                     Nome
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    CPF
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Data Nasc.
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -103,6 +111,9 @@ export default function Page() {
                   <tr key={p.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {p.nome}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {p["cpf"] || "—"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {p.dataNascimento || "—"}

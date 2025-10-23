@@ -25,6 +25,7 @@ const PACIENTES = [
   {
     id: 1,
     nome: "João da Silva",
+    cpf: "123.456.789-00",
     dataNascimento: "1980-05-12",
     sexo: "M",
     telefone: "(11) 99999-0001",
@@ -34,6 +35,7 @@ const PACIENTES = [
   {
     id: 2,
     nome: "Ana Oliveira",
+    cpf: "987.654.321-00",
     dataNascimento: "1992-11-03",
     sexo: "F",
     telefone: "(11) 99999-0002",
@@ -43,6 +45,7 @@ const PACIENTES = [
   {
     id: 3,
     nome: "Pedro Gomes",
+    cpf: "222.333.444-55",
     dataNascimento: "1975-07-21",
     sexo: "M",
     telefone: "(11) 99999-0003",

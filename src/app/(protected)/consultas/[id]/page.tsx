@@ -13,7 +13,8 @@ interface Consulta {
   motivo?: string;
 }
 
-export default function Page({ params }: { params: { id: string } }) {
+export default function Page(props: unknown) {
+  const { params } = props as { params: { id: string } };
   const router = useRouter();
   const [consulta, setConsulta] = useState<Consulta | null>(null);
   const [loading, setLoading] = useState(true);
