@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+type IdLike = string | number;
+
 interface Paciente {
-  id: number;
+  id: IdLike;
   nome: string;
   dataNascimento?: string;
   sexo?: string;
@@ -21,42 +23,45 @@ export default function Page({ params }: { params: { id: string } }) {
   const [saving, setSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
+  const API_BASE =
+    process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ||
+    "http://localhost:4000/api/v1";
+
+  // 🔹 Busca dados do paciente
   useEffect(() => {
     const fetchPaciente = async () => {
       try {
-        // FUTURA INTEGRAÇÃO COM BACKEND (chamada direta):
-        // const api = process.env.NEXT_PUBLIC_API_URL;
-        // const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-        // const res = await fetch(`${api}/pacientes/${params.id}`, {
-        //   headers: {
-        //     'Content-Type': 'application/json',
-        //     ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        //   },
-        //   cache: 'no-store',
-        // });
-        const res = await fetch(`/api/pacientes/${params.id}`);
+        const res = await fetch(`${API_BASE}/pacientes/${params.id}`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          cache: "no-store",
+        });
         if (!res.ok) throw new Error("not found");
         const data = await res.json();
-        setPaciente(data);
+
+        setPaciente({
+          id: data.id,
+          nome: data.nome,
+          cpf: data.cpf,
+          dataNascimento: data.nascimento
+            ? new Date(data.nascimento).toISOString().split("T")[0]
+            : "",
+          sexo: data.sexo,
+          telefone: data.telefone,
+          email: data.email,
+          observacoes: data.observacoes,
+        });
       } catch (err) {
         console.error("Erro ao carregar paciente", err);
-        setPaciente({
-          id: Number(params.id),
-          nome: "Paciente Exemplo",
-          dataNascimento: "1985-01-01",
-          sexo: "M",
-          telefone: "(11) 99999-0000",
-          email: "exemplo@email.com",
-          cpf: "000.000.000-00",
-          observacoes: "",
-        });
+        alert("Erro ao carregar paciente");
       } finally {
         setLoading(false);
       }
     };
     fetchPaciente();
-  }, [params.id]);
+  }, [params.id, API_BASE]);
 
+  // 🔹 Atualiza o estado conforme inputs
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
@@ -67,25 +72,23 @@ export default function Page({ params }: { params: { id: string } }) {
     setPaciente({ ...paciente, [name]: value });
   };
 
+  // 🔹 Salvar alterações (PATCH)
   const handleSave = async () => {
     if (!paciente) return;
     setSaving(true);
     try {
-      // FUTURA INTEGRAÇÃO COM BACKEND (chamada direta):
-      // const api = process.env.NEXT_PUBLIC_API_URL;
-      // const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-      // const res = await fetch(`${api}/pacientes/${params.id}`, {
-      //   method: 'PUT',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      //   },
-      //   body: JSON.stringify(paciente),
-      // });
-      const res = await fetch(`/api/pacientes/${params.id}`, {
-        method: "PUT",
+      const res = await fetch(`${API_BASE}/pacientes/${params.id}`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(paciente),
+        body: JSON.stringify({
+          nome: paciente.nome,
+          cpf: paciente.cpf,
+          dataNascimento: paciente.dataNascimento,
+          sexo: paciente.sexo,
+          telefone: paciente.telefone,
+          email: paciente.email,
+          observacoes: paciente.observacoes,
+        }),
       });
       if (!res.ok) throw new Error("Falha ao salvar");
       setIsEditing(false);
@@ -98,19 +101,11 @@ export default function Page({ params }: { params: { id: string } }) {
     }
   };
 
+  // 🔹 Excluir paciente
   const handleDelete = async () => {
     if (!confirm("Deseja realmente excluir este paciente?")) return;
     try {
-      // FUTURA INTEGRAÇÃO COM BACKEND (chamada direta):
-      // const api = process.env.NEXT_PUBLIC_API_URL;
-      // const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-      // const res = await fetch(`${api}/pacientes/${params.id}`, {
-      //   method: 'DELETE',
-      //   headers: {
-      //     ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      //   },
-      // });
-      const res = await fetch(`/api/pacientes/${params.id}`, {
+      const res = await fetch(`${API_BASE}/pacientes/${params.id}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Falha ao excluir");
@@ -177,140 +172,89 @@ export default function Page({ params }: { params: { id: string } }) {
         <div className="bg-white rounded-lg border p-6">
           {isEditing ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Nome
-                </label>
-                <input
-                  name="nome"
-                  value={paciente.nome}
-                  onChange={handleChange}
-                  required
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  CPF
-                </label>
-                <input
-                  name="cpf"
-                  value={paciente.cpf || ""}
-                  onChange={handleChange}
-                  required
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Data de Nascimento
-                </label>
-                <input
-                  type="date"
-                  name="dataNascimento"
-                  value={paciente.dataNascimento || ""}
-                  onChange={handleChange}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Sexo
-                </label>
-                <select
-                  name="sexo"
-                  value={paciente.sexo || ""}
-                  onChange={handleChange}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
-                >
-                  <option value="">Selecione</option>
-                  <option value="M">Masculino</option>
-                  <option value="F">Feminino</option>
-                  <option value="O">Outro</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Telefone
-                </label>
-                <input
-                  name="telefone"
-                  value={paciente.telefone || ""}
-                  onChange={handleChange}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={paciente.email || ""}
-                  onChange={handleChange}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Observações
-                </label>
-                <textarea
-                  name="observacoes"
-                  value={paciente.observacoes || ""}
-                  onChange={handleChange}
-                  rows={4}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
-                />
-              </div>
+              <InputField
+                label="Nome"
+                name="nome"
+                value={paciente.nome}
+                onChange={handleChange}
+              />
+              <InputField
+                label="CPF"
+                name="cpf"
+                value={paciente.cpf || ""}
+                onChange={handleChange}
+              />
+              <InputField
+                label="Data de Nascimento"
+                name="dataNascimento"
+                type="date"
+                value={paciente.dataNascimento || ""}
+                onChange={handleChange}
+              />
+              <SelectField
+                label="Sexo"
+                name="sexo"
+                value={paciente.sexo || ""}
+                onChange={handleChange}
+                options={[
+                  { label: "Selecione", value: "" },
+                  { label: "Masculino", value: "M" },
+                  { label: "Feminino", value: "F" },
+                  { label: "Outro", value: "O" },
+                ]}
+              />
+              <InputField
+                label="Telefone"
+                name="telefone"
+                value={paciente.telefone || ""}
+                onChange={handleChange}
+              />
+              <InputField
+                label="Email"
+                name="email"
+                type="email"
+                value={paciente.email || ""}
+                onChange={handleChange}
+              />
+              <TextareaField
+                label="Observações"
+                name="observacoes"
+                value={paciente.observacoes || ""}
+                onChange={handleChange}
+              />
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div>
-                <div className="text-sm text-gray-500">Nome</div>
-                <div className="text-lg font-semibold">{paciente.nome}</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500">Data de Nascimento</div>
-                <div className="text-lg">
-                  {paciente.dataNascimento
+              <Display label="Nome" value={paciente.nome} />
+              <Display
+                label="Data de Nascimento"
+                value={
+                  paciente.dataNascimento
                     ? new Date(paciente.dataNascimento).toLocaleDateString(
                         "pt-BR"
                       )
-                    : "—"}
-                </div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500">Sexo</div>
-                <div className="text-lg">
-                  {paciente.sexo === "M"
+                    : "—"
+                }
+              />
+              <Display
+                label="Sexo"
+                value={
+                  paciente.sexo === "M"
                     ? "Masculino"
                     : paciente.sexo === "F"
                     ? "Feminino"
                     : paciente.sexo === "O"
                     ? "Outro"
-                    : "—"}
-                </div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500">Telefone</div>
-                <div className="text-lg">{paciente.telefone || "—"}</div>
-              </div>
-              <div className="sm:col-span-2">
-                <div className="text-sm text-gray-500">Email</div>
-                <div className="text-lg">{paciente.email || "—"}</div>
-              </div>
-              <div className="sm:col-span-2">
-                <div className="text-sm text-gray-500">Observações</div>
-                <div className="text-lg">{paciente.observacoes || "—"}</div>
-              </div>
+                    : "—"
+                }
+              />
+              <Display label="Telefone" value={paciente.telefone || "—"} />
+              <Display label="Email" value={paciente.email || "—"} />
+              <Display
+                label="Observações"
+                value={paciente.observacoes || "—"}
+                full
+              />
             </div>
           )}
 
@@ -325,5 +269,110 @@ export default function Page({ params }: { params: { id: string } }) {
         </div>
       </div>
     </main>
+  );
+}
+
+/* ---------- Subcomponentes reutilizáveis ---------- */
+
+interface InputFieldProps {
+  label: string;
+  name: string;
+  value: string;
+  type?: string;
+  onChange: React.ChangeEventHandler<HTMLInputElement>;
+}
+
+function InputField({
+  label,
+  name,
+  value,
+  type = "text",
+  onChange,
+}: InputFieldProps) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700">{label}</label>
+      <input
+        type={type}
+        name={name}
+        value={value}
+        onChange={onChange}
+        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
+      />
+    </div>
+  );
+}
+
+function SelectField({
+  label,
+  name,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  name: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  options: { label: string; value: string }[];
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700">{label}</label>
+      <select
+        name={name}
+        value={value}
+        onChange={onChange}
+        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
+      >
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+function TextareaField({
+  label,
+  name,
+  value,
+  onChange,
+}: {
+  label: string;
+  name: string;
+  value: string;
+  onChange: React.ChangeEventHandler<HTMLTextAreaElement>;
+}) {
+  return (
+    <div className="sm:col-span-2">
+      <label className="block text-sm font-medium text-gray-700">{label}</label>
+      <textarea
+        name={name}
+        value={value}
+        onChange={onChange}
+        rows={4}
+        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
+      />
+    </div>
+  );
+}
+
+function Display({
+  label,
+  value,
+  full = false,
+}: {
+  label: string;
+  value: string;
+  full?: boolean;
+}) {
+  return (
+    <div className={full ? "sm:col-span-2" : ""}>
+      <div className="text-sm text-gray-500">{label}</div>
+      <div className="text-lg font-medium text-gray-900">{value}</div>
+    </div>
   );
 }

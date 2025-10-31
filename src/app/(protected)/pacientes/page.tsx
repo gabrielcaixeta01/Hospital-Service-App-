@@ -1,65 +1,89 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
-interface Paciente {
-  id: number;
+type IdLike = string | number;
+
+interface PacienteUI {
+  id: IdLike;
   nome: string;
+  cpf?: string;
   dataNascimento?: string;
   telefone?: string;
   email?: string;
-  cpf?: string;
+}
+
+interface PacienteAPI {
+  id: IdLike;
+  nome: string;
+  cpf?: string | null;
+  nascimento?: string | null; // <- vem assim do back
+  telefone?: string | null;
+  email?: string | null;
+  // ...outros campos do Prisma
+}
+
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ||
+  "http://localhost:4000/api/v1";
+
+function fmtDateISOToBR(iso?: string | null): string | undefined {
+  if (!iso) return undefined;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso ?? undefined;
+  return d.toLocaleDateString("pt-BR");
 }
 
 export default function Page() {
   const router = useRouter();
-  const [pacientes, setPacientes] = useState<Paciente[]>([]);
+  const [pacientes, setPacientes] = useState<PacienteUI[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const fetchPacientes = async () => {
       try {
-        // FUTURA INTEGRAÇÃO COM BACKEND (chamada direta):
-        // const api = process.env.NEXT_PUBLIC_API_URL;
-        // const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-        // const res = await fetch(`${api}/pacientes`, {
-        //   headers: {
-        //     'Content-Type': 'application/json',
-        //     ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        //   },
-        //   cache: 'no-store',
-        // });
-        const res = await fetch("/api/pacientes");
-        if (!res.ok) throw new Error("Falha");
-        const data = await res.json();
-        setPacientes(data);
-      } catch (err) {
-        console.error("Erro ao carregar pacientes:", err);
-        setPacientes([
-          {
-            id: 1,
-            nome: "João da Silva",
-            cpf: "123.456.789-00",
-            dataNascimento: "1980-05-12",
-            telefone: "(11) 99999-0001",
-            email: "joao@example.com",
-          },
-          {
-            id: 2,
-            nome: "Ana Oliveira",
-            cpf: "987.654.321-00",
-            dataNascimento: "1992-11-03",
-            telefone: "(11) 99999-0002",
-            email: "ana@example.com",
-          },
-        ]);
+        setLoading(true);
+        setError("");
+
+        // Se tiver auth, acrescente o header Authorization aqui.
+        const res = await fetch(`${API_BASE}/pacientes`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          cache: "no-store",
+        });
+
+        if (!res.ok) {
+          const txt = await res.text();
+          throw new Error(txt || `Falha ao carregar (HTTP ${res.status})`);
+        }
+
+        const data: PacienteAPI[] = await res.json();
+
+        const mapped: PacienteUI[] = (data ?? []).map((p) => ({
+          id: p.id,
+          nome: p.nome,
+          cpf: p.cpf ?? undefined,
+          dataNascimento: fmtDateISOToBR(p.nascimento),
+          telefone: p.telefone ?? undefined,
+          email: p.email ?? undefined,
+        }));
+
+        setPacientes(mapped);
+      } catch (e: unknown) {
+        console.error("Erro ao carregar pacientes:", e);
+        setError("Não foi possível carregar a lista de pacientes.");
+        setPacientes([]);
       } finally {
         setLoading(false);
       }
     };
+
     fetchPacientes();
   }, []);
+
+  const hasData = useMemo(() => pacientes.length > 0, [pacientes]);
 
   return (
     <main className="min-h-screen bg-gray-50 pt-16">
@@ -75,7 +99,7 @@ export default function Page() {
           <div>
             <button
               onClick={() => router.push("/pacientes/novo")}
-              className="px-4 py-2 rounded bg-blue-600 text-white"
+              className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
             >
               + Novo Paciente
             </button>
@@ -84,7 +108,13 @@ export default function Page() {
 
         <div className="bg-white rounded-lg border shadow overflow-x-auto">
           {loading ? (
-            <div className="p-4 text-center">Carregando...</div>
+            <div className="p-6 text-center text-gray-600">Carregando…</div>
+          ) : error ? (
+            <div className="p-6 text-center text-red-600">{error}</div>
+          ) : !hasData ? (
+            <div className="p-6 text-center text-gray-600">
+              Nenhum paciente cadastrado ainda.
+            </div>
           ) : (
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -108,12 +138,12 @@ export default function Page() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {pacientes.map((p) => (
-                  <tr key={p.id} className="hover:bg-gray-50">
+                  <tr key={String(p.id)} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {p.nome}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {p["cpf"] || "—"}
+                      {p.cpf || "—"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {p.dataNascimento || "—"}
@@ -124,7 +154,7 @@ export default function Page() {
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                       <button
                         onClick={() => router.push(`/pacientes/${p.id}`)}
-                        className="px-2 py-1 border rounded"
+                        className="px-2 py-1 border rounded hover:bg-gray-50"
                       >
                         Ver
                       </button>
