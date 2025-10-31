@@ -28,11 +28,13 @@ const API_BASE =
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ||
   "http://localhost:4000/api/v1";
 
-function fmtDateISOToBR(iso?: string | null): string | undefined {
+function dateOnlyToBR(iso: string | null | undefined) {
   if (!iso) return undefined;
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso ?? undefined;
-  return d.toLocaleDateString("pt-BR");
+  const datePart = iso.split("T")[0]; // "YYYY-MM-DD"
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(datePart);
+  if (!m) return undefined;
+  const [, y, mo, d] = m;
+  return `${d}/${mo}/${y}`;
 }
 
 export default function Page() {
@@ -65,7 +67,7 @@ export default function Page() {
           id: p.id,
           nome: p.nome,
           cpf: p.cpf ?? undefined,
-          dataNascimento: fmtDateISOToBR(p.nascimento),
+          dataNascimento: dateOnlyToBR(p.nascimento),
           telefone: p.telefone ?? undefined,
           email: p.email ?? undefined,
         }));
