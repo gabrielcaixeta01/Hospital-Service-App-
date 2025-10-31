@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 
 type IdLike = string | number;
 
@@ -16,8 +16,10 @@ interface Paciente {
   cpf?: string;
 }
 
-export default function Page({ params }: { params: { id: string } }) {
+export default function Page() {
   const router = useRouter();
+  const params = useParams<{ id: string }>();
+  const id = params?.id;                  
   const [paciente, setPaciente] = useState<Paciente | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -29,9 +31,11 @@ export default function Page({ params }: { params: { id: string } }) {
 
   // 🔹 Busca dados do paciente
   useEffect(() => {
+    if (!id) return;
+
     const fetchPaciente = async () => {
       try {
-        const res = await fetch(`${API_BASE}/pacientes/${params.id}`, {
+        const res = await fetch(`${API_BASE}/pacientes/${id}`, {
           method: "GET",
           headers: { "Content-Type": "application/json" },
           cache: "no-store",
@@ -59,7 +63,7 @@ export default function Page({ params }: { params: { id: string } }) {
       }
     };
     fetchPaciente();
-  }, [params.id, API_BASE]);
+  }, [id, API_BASE]);
 
   // 🔹 Atualiza o estado conforme inputs
   const handleChange = (
