@@ -1,48 +1,62 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
-interface Medico {
-  id: number;
+type IdLike = string | number;
+
+interface Especialidade {
+  id: IdLike;
   nome: string;
-  especialidade?: string;
+}
+
+interface Medico {
+  id: IdLike;
+  nome: string;
+  crm?: string | null;
+  email?: string | null;
+  telefone?: string | null;
+  especialidades?: Especialidade[]; // vindo do Prisma include
 }
 
 export default function Page() {
   const router = useRouter();
   const [medicos, setMedicos] = useState<Medico[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const API_BASE =
+    process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ||
+    "http://localhost:4000/api/v1";
 
   useEffect(() => {
     const fetchMedicos = async () => {
       try {
-        // FUTURA INTEGRAÇÃO COM BACKEND (chamada direta):
-        // const api = process.env.NEXT_PUBLIC_API_URL;
-        // const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-        // const res = await fetch(`${api}/medicos`, {
-        //   headers: {
-        //     'Content-Type': 'application/json',
-        //     ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        //   },
-        //   cache: 'no-store',
-        // });
-        const res = await fetch("/api/medicos");
-        if (!res.ok) throw new Error("Falha");
-        const data = await res.json();
-        setMedicos(data);
-      } catch (err) {
-        console.error("Erro ao carregar médicos", err);
-        setMedicos([
-          { id: 1, nome: "Dr. Carlos Pereira", especialidade: "Clínica" },
-          { id: 2, nome: "Dra. Maria Santos", especialidade: "Pediatria" },
-        ]);
+        setLoading(true);
+        setError("");
+        const res = await fetch(`${API_BASE}/medicos`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          cache: "no-store",
+        });
+        if (!res.ok) {
+          const txt = await res.text();
+          throw new Error(txt || `Falha ao carregar (HTTP ${res.status})`);
+        }
+        const data: Medico[] = await res.json();
+        setMedicos(Array.isArray(data) ? data : []);
+      } catch (e: unknown) {
+        console.error("Erro ao carregar médicos:", e);
+        setError("Não foi possível carregar a lista de médicos.");
+        setMedicos([]);
       } finally {
         setLoading(false);
       }
     };
     fetchMedicos();
-  }, []);
+  }, [API_BASE]);
+
+  const hasData = useMemo(() => medicos.length > 0, [medicos]);
 
   return (
     <main className="min-h-screen bg-gray-50 pt-16">
@@ -58,7 +72,7 @@ export default function Page() {
           <div>
             <button
               onClick={() => router.push("/medicos/novo")}
-              className="px-4 py-2 rounded bg-blue-600 text-white"
+              className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
             >
               + Novo Médico
             </button>
@@ -67,7 +81,13 @@ export default function Page() {
 
         <div className="bg-white rounded-lg border shadow overflow-x-auto">
           {loading ? (
-            <div className="p-4 text-center">Carregando...</div>
+            <div className="p-6 text-center text-gray-600">Carregando…</div>
+          ) : error ? (
+            <div className="p-6 text-center text-red-600">{error}</div>
+          ) : !hasData ? (
+            <div className="p-6 text-center text-gray-600">
+              Nenhum médico cadastrado ainda.
+            </div>
           ) : (
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -76,7 +96,7 @@ export default function Page() {
                     Nome
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Especialidade
+                    Especialidades
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Ações
@@ -84,24 +104,28 @@ export default function Page() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {medicos.map((m) => (
-                  <tr key={m.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {m.nome}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {m.especialidade || "—"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                      <button
-                        onClick={() => router.push(`/medicos/${m.id}`)}
-                        className="px-2 py-1 border rounded"
-                      >
-                        Ver
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {medicos.map((m) => {
+                  const espec = (m.especialidades ?? []).map((e) => e.nome);
+                  const especLabel = espec.length ? espec.join(", ") : "—";
+                  return (
+                    <tr key={String(m.id)} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {m.nome}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {especLabel}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                        <button
+                          onClick={() => router.push(`/medicos/${m.id}`)}
+                          className="px-2 py-1 border rounded hover:bg-gray-50"
+                        >
+                          Ver
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}

@@ -1,57 +1,86 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useRouter, useParams } from "next/navigation";
 
-interface Medico {
-  id: number;
+type IdLike = string | number;
+
+interface Especialidade {
+  id: IdLike;
   nome: string;
-  crm?: string;
-  especialidade?: string;
-  telefone?: string;
-  email?: string;
 }
 
-export default function Page({ params }: { params: { id: string } }) {
+interface MedicoAPI {
+  id: IdLike;
+  nome: string;
+  crm?: string | null;
+  email?: string | null;
+  telefone?: string | null;
+  especialidades?: Especialidade[]; // vindo do Prisma include
+}
+
+export default function Page() {
   const router = useRouter();
-  const [medico, setMedico] = useState<Medico | null>(null);
+  const params = useParams<{ id: string }>();
+  const id = params?.id;
+
+  const [medico, setMedico] = useState<MedicoAPI | null>(null);
+  const [allEspecialidades, setAllEspecialidades] = useState<Especialidade[]>(
+    []
+  );
+  const [selectedEspecialidades, setSelectedEspecialidades] = useState<
+    IdLike[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [error, setError] = useState("");
 
+  const API_BASE =
+    process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ||
+    "http://localhost:4000/api/v1";
+
+  // Carrega médico + catálogo de especialidades
   useEffect(() => {
-    const fetchMedico = async () => {
+    if (!id) return;
+
+    const run = async () => {
       try {
-        // FUTURA INTEGRAÇÃO COM BACKEND (chamada direta):
-        // const api = process.env.NEXT_PUBLIC_API_URL;
-        // const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-        // const res = await fetch(`${api}/medicos/${params.id}`, {
-        //   headers: {
-        //     'Content-Type': 'application/json',
-        //     ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        //   },
-        //   cache: 'no-store',
-        // });
-        const res = await fetch(`/api/medicos/${params.id}`);
-        if (!res.ok) throw new Error("not found");
-        const data = await res.json();
-        setMedico(data);
-      } catch (err) {
-        console.error("Erro ao carregar médico", err);
-        setMedico({
-          id: Number(params.id),
-          nome: "Médico Exemplo",
-          crm: "CRM/SP 123456",
-          especialidade: "Clínica Geral",
-          telefone: "(11) 99999-1111",
-          email: "medico@exemplo.com",
-        });
+        setLoading(true);
+        setError("");
+
+        const [medRes, espRes] = await Promise.all([
+          fetch(`${API_BASE}/medicos/${id}`, {
+            headers: { "Content-Type": "application/json" },
+            cache: "no-store",
+          }),
+          fetch(`${API_BASE}/especialidades`, {
+            headers: { "Content-Type": "application/json" },
+            cache: "no-store",
+          }),
+        ]);
+
+        if (!medRes.ok) throw new Error("Falha ao carregar médico");
+        if (!espRes.ok) throw new Error("Falha ao carregar especialidades");
+
+        const med: MedicoAPI = await medRes.json();
+        const esp: Especialidade[] = await espRes.json();
+
+        setMedico(med);
+        setAllEspecialidades(esp);
+        setSelectedEspecialidades((med.especialidades ?? []).map((e) => e.id));
+      } catch (e: unknown) {
+        console.error(e);
+        setError((e as Error)?.message || "Erro ao carregar dados");
       } finally {
         setLoading(false);
       }
     };
-    fetchMedico();
-  }, [params.id]);
+
+    run();
+  }, [id, API_BASE]);
+
+  const hasData = useMemo(() => !!medico, [medico]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -61,27 +90,37 @@ export default function Page({ params }: { params: { id: string } }) {
     setMedico({ ...medico, [name]: value });
   };
 
+  const toggleEspecialidade = (eid: IdLike) => {
+    setSelectedEspecialidades((prev) =>
+      prev.includes(eid) ? prev.filter((v) => v !== eid) : [...prev, eid]
+    );
+  };
+
   const handleSave = async () => {
-    if (!medico) return;
+    if (!medico || !id) return;
     setSaving(true);
     try {
-      // FUTURA INTEGRAÇÃO COM BACKEND (chamada direta):
-      // const api = process.env.NEXT_PUBLIC_API_URL;
-      // const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-      // const res = await fetch(`${api}/medicos/${params.id}`, {
-      //   method: 'PUT',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      //   },
-      //   body: JSON.stringify(medico),
-      // });
-      const res = await fetch(`/api/medicos/${params.id}`, {
-        method: "PUT",
+      const res = await fetch(`${API_BASE}/medicos/${id}`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(medico),
+        body: JSON.stringify({
+          nome: medico.nome,
+          crm: medico.crm ?? undefined,
+          telefone: medico.telefone ?? undefined,
+          email: medico.email ?? undefined,
+          // substitui completamente as relações:
+          replaceEspecialidadeIds: selectedEspecialidades.map((v) =>
+            typeof v === "string" ? Number(v) : v
+          ),
+        }),
       });
-      if (!res.ok) throw new Error("Falha ao salvar");
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(txt || "Falha ao salvar médico");
+      }
+      const updated: MedicoAPI = await res.json();
+      setMedico(updated);
+      setSelectedEspecialidades((updated.especialidades ?? []).map((e) => e.id));
       setIsEditing(false);
       alert("Médico atualizado com sucesso!");
     } catch (err) {
@@ -93,20 +132,10 @@ export default function Page({ params }: { params: { id: string } }) {
   };
 
   const handleDelete = async () => {
+    if (!id) return;
     if (!confirm("Deseja realmente excluir este médico?")) return;
     try {
-      // FUTURA INTEGRAÇÃO COM BACKEND (chamada direta):
-      // const api = process.env.NEXT_PUBLIC_API_URL;
-      // const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-      // const res = await fetch(`${api}/medicos/${params.id}`, {
-      //   method: 'DELETE',
-      //   headers: {
-      //     ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      //   },
-      // });
-      const res = await fetch(`/api/medicos/${params.id}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(`${API_BASE}/medicos/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Falha ao excluir");
       alert("Médico excluído com sucesso!");
       router.push("/medicos");
@@ -116,15 +145,16 @@ export default function Page({ params }: { params: { id: string } }) {
     }
   };
 
-  if (loading) return <div className="p-6">Carregando...</div>;
-  if (!medico) return <div className="p-6">Médico não encontrado</div>;
+  if (loading) return <div className="p-6">Carregando…</div>;
+  if (error) return <div className="p-6 text-red-600">{error}</div>;
+  if (!hasData) return <div className="p-6">Médico não encontrado</div>;
 
   return (
     <main className="min-h-screen bg-gray-50 pt-16">
       <div className="w-full max-w-6xl px-6 py-10 mx-auto">
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-blue-700">{medico.nome}</h1>
+            <h1 className="text-3xl font-bold text-blue-700">{medico!.nome}</h1>
             <p className="text-gray-600 mt-1">
               {isEditing ? "Editando médico" : "Dados do médico"}
             </p>
@@ -169,90 +199,84 @@ export default function Page({ params }: { params: { id: string } }) {
         <div className="bg-white rounded-lg border p-6">
           {isEditing ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Nome
-                </label>
+              <Field label="Nome">
                 <input
                   name="nome"
-                  value={medico.nome}
+                  value={medico!.nome}
                   onChange={handleChange}
-                  required
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
                 />
-              </div>
+              </Field>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  CRM
-                </label>
+              <Field label="CRM">
                 <input
                   name="crm"
-                  value={medico.crm || ""}
+                  value={medico!.crm ?? ""}
                   onChange={handleChange}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
                 />
-              </div>
+              </Field>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Especialidade
-                </label>
-                <input
-                  name="especialidade"
-                  value={medico.especialidade || ""}
-                  onChange={handleChange}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Telefone
-                </label>
+              <Field label="Telefone">
                 <input
                   name="telefone"
-                  value={medico.telefone || ""}
+                  value={medico!.telefone ?? ""}
                   onChange={handleChange}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
                 />
-              </div>
+              </Field>
 
-              <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Email
-                </label>
+              <Field label="Email">
                 <input
                   type="email"
                   name="email"
-                  value={medico.email || ""}
+                  value={medico!.email ?? ""}
                   onChange={handleChange}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
                 />
+              </Field>
+
+              <div className="sm:col-span-2">
+                <div className="block text-sm font-medium text-gray-700 mb-2">
+                  Especialidades
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {allEspecialidades.map((e) => {
+                    const checked = selectedEspecialidades.includes(e.id);
+                    return (
+                      <label
+                        key={String(e.id)}
+                        className="flex items-center gap-2 text-sm border rounded px-3 py-2 hover:bg-gray-50"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleEspecialidade(e.id)}
+                        />
+                        {e.nome}
+                      </label>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div>
-                <div className="text-sm text-gray-500">Nome</div>
-                <div className="text-lg font-semibold">{medico.nome}</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500">CRM</div>
-                <div className="text-lg">{medico.crm || "—"}</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500">Especialidade</div>
-                <div className="text-lg">{medico.especialidade || "—"}</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500">Telefone</div>
-                <div className="text-lg">{medico.telefone || "—"}</div>
-              </div>
-              <div className="sm:col-span-2">
-                <div className="text-sm text-gray-500">Email</div>
-                <div className="text-lg">{medico.email || "—"}</div>
-              </div>
+              <Display label="Nome" value={medico!.nome} />
+              <Display label="CRM" value={medico!.crm || "—"} />
+              <Display label="Telefone" value={medico!.telefone || "—"} />
+              <Display label="Email" value={medico!.email || "—"} />
+              <Display
+                label="Especialidades"
+                value={
+                  (medico!.especialidades ?? []).length
+                    ? (medico!.especialidades ?? [])
+                        .map((e) => e.nome)
+                        .join(", ")
+                    : "—"
+                }
+                full
+              />
             </div>
           )}
 
@@ -267,5 +291,32 @@ export default function Page({ params }: { params: { id: string } }) {
         </div>
       </div>
     </main>
+  );
+}
+
+/* ----- helpers de UI ----- */
+function Field({ label, children }: { label: ReactNode; children?: ReactNode }) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700">{label}</label>
+      {children}
+    </div>
+  );
+}
+
+function Display({
+  label,
+  value,
+  full = false,
+}: {
+  label: string;
+  value: string;
+  full?: boolean;
+}) {
+  return (
+    <div className={full ? "sm:col-span-2" : ""}>
+      <div className="text-sm text-gray-500">{label}</div>
+      <div className="text-lg font-medium text-gray-900">{value}</div>
+    </div>
   );
 }
