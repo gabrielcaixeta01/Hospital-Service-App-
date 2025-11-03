@@ -55,13 +55,13 @@ export default function Page() {
           <div>
             <h1 className="text-3xl font-bold text-blue-700">Consultas</h1>
             <p className="text-gray-600 mt-1">Acompanhe as consultas marcadas.</p>
+          </div>
           <Link
             href="/consultas/nova"
             className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
           >
             + Nova Consulta
           </Link>
-        </div>
         </div>
 
         <div className="bg-white rounded-lg border shadow overflow-x-auto">
