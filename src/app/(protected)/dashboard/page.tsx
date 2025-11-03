@@ -17,6 +17,7 @@ const api = (path: string) =>
 type Paciente = { id: number };
 type Consulta = { id: number; dataHora?: string | null; data?: string | null };
 type Internacao = { id: number; dataAlta?: string | null };
+type Exame = { id: number; resultado?: string | null };
 
 /* ---------- Card reutilizável ---------- */
 const Card = ({
@@ -66,7 +67,7 @@ export default function DashboardPage() {
   const [leitosOcupadosCount, setLeitosOcupadosCount] = useState<number | null>(
     null
   );
-  const [examesPendentes] = useState<string>("—"); // placeholder (ainda não temos endpoint de exames)
+  const [examesPendentesCount, setExamesPendentesCount] = useState<number | null>(null);
 
   useEffect(() => {
     const run = async () => {
@@ -74,22 +75,21 @@ export default function DashboardPage() {
         setLoading(true);
         setErr("");
 
-        // Busca em paralelo; se algum falhar, seguimos com os outros
+        // 0: pacientes, 1: consultas, 2: internacoes, 3: exames
         const results = await Promise.allSettled([
           api("/pacientes"),
           api("/consultas"),
           api("/internacoes"),
+          api("/exames"),
         ]);
 
         // Pacientes
         if (results[0].status === "fulfilled" && results[0].value.ok) {
           const data: Paciente[] = await results[0].value.json();
           setPacientesCount(data.length);
-        } else {
-          setPacientesCount(null);
-        }
+        } else setPacientesCount(null);
 
-        // Consultas hoje (tenta chave dataHora; se não tiver, usa data)
+        // Consultas hoje
         if (results[1].status === "fulfilled" && results[1].value.ok) {
           const cons: Consulta[] = await results[1].value.json();
           const today = new Date();
@@ -104,18 +104,20 @@ export default function DashboardPage() {
             );
           }).length;
           setConsultasHojeCount(qtd);
-        } else {
-          setConsultasHojeCount(null);
-        }
+        } else setConsultasHojeCount(null);
 
-        // Leitos ocupados = internações com dataAlta null
+        // Leitos ocupados (internações sem alta)
         if (results[2].status === "fulfilled" && results[2].value.ok) {
           const ints: Internacao[] = await results[2].value.json();
-          const ativos = ints.filter((i) => !i.dataAlta).length;
-          setLeitosOcupadosCount(ativos);
-        } else {
-          setLeitosOcupadosCount(null);
-        }
+          setLeitosOcupadosCount(ints.filter((i) => !i.dataAlta).length);
+        } else setLeitosOcupadosCount(null);
+
+        // Exames pendentes (resultado null/indefinido/"")
+        if (results[3].status === "fulfilled" && results[3].value.ok) {
+          const exames: Exame[] = await results[3].value.json();
+          const pend = exames.filter((e) => !e.resultado || e.resultado.trim() === "").length;
+          setExamesPendentesCount(pend);
+        } else setExamesPendentesCount(null);
       } catch (e: unknown) {
         console.error(e);
         setErr("Falha ao carregar indicadores.");
@@ -132,9 +134,9 @@ export default function DashboardPage() {
       { label: "Pacientes", value: pacientesCount ?? "—" },
       { label: "Consultas hoje", value: consultasHojeCount ?? "—" },
       { label: "Leitos ocupados", value: leitosOcupadosCount ?? "—" },
-      { label: "Exames pendentes", value: examesPendentes },
+      { label: "Exames pendentes", value: examesPendentesCount ?? "—" },
     ],
-    [pacientesCount, consultasHojeCount, leitosOcupadosCount, examesPendentes]
+    [pacientesCount, consultasHojeCount, leitosOcupadosCount, examesPendentesCount]
   );
 
   return (
@@ -143,9 +145,7 @@ export default function DashboardPage() {
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-3xl font-bold text-blue-700">Dashboard</h1>
-          <p className="text-gray-600">
-            Bem-vindo! Use os atalhos para navegar.
-          </p>
+          <p className="text-gray-600">Bem-vindo! Use os atalhos para navegar.</p>
           {err && (
             <p className="text-sm mt-1 text-red-600">
               {err} (alguns cartões podem mostrar “—”)
@@ -171,10 +171,7 @@ export default function DashboardPage() {
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {KPIs.map((k) => (
-          <div
-            key={k.label}
-            className="rounded-2xl border bg-white p-5 shadow-sm"
-          >
+          <div key={k.label} className="rounded-2xl border bg-white p-5 shadow-sm">
             <div className="text-sm text-gray-500">{k.label}</div>
             <div className="text-2xl font-semibold text-gray-800 mt-1">
               {loading ? "…" : k.value}
@@ -209,9 +206,16 @@ export default function DashboardPage() {
           href="/internacoes"
           actions={[{ label: "Nova", href: "/internacoes/novo" }]}
         />
+        {/* NOVO CARD: EXAMES */}
+        <Card
+          title="Exames"
+          desc="Pedidos e resultados de exames; acompanhe pendências."
+          href="/exames"
+          actions={[{ label: "Novo", href: "/exames/novo" }]}
+        />
         <Card
           title="Relatórios"
-          desc="Relatórios de agenda por médico, ocupação de leitos e atendimentos."
+          desc="Agenda por médico, ocupação de leitos e atendimentos."
           href="/relatorios/agenda-medico"
           actions={[
             { label: "Agenda Médico", href: "/relatorios/agenda-medico" },
