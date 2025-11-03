@@ -1,52 +1,38 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
-interface Item {
-  id: number | string;
-  dataHora: string; // ISO UTC vindo do back
+type Id = number | string;
+interface Consulta {
+  id: Id;
+  dataHora: string;           // ISO do backend
   motivo?: string | null;
-  notas?: string | null;
-  medico: { id: number | string; nome: string };
-  paciente: { id: number | string; nome: string };
+  medico?: { id: Id; nome: string } | null;
+  paciente?: { id: Id; nome: string } | null;
+  medicoId?: Id;
+  pacienteId?: Id;
 }
 
-export default function Page() {
-  const [rows, setRows] = useState<Item[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState("");
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ||
+  "http://localhost:4000/api/v1";
 
-  const API_BASE =
-    process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ||
-    "http://localhost:4000/api/v1";
+export default function Page() {
+  const router = useRouter();
+  const [items, setItems] = useState<Consulta[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchAll = async () => {
+    (async () => {
       try {
-        setLoading(true);
-        setErr("");
         const res = await fetch(`${API_BASE}/consultas`, { cache: "no-store" });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        setRows(Array.isArray(data) ? data : []);
-      } catch (e: unknown) {
-        console.error(e);
-        setErr("Não foi possível carregar as consultas.");
+        setItems((await res.json()) ?? []);
       } finally {
         setLoading(false);
       }
-    };
-    fetchAll();
-  }, [API_BASE]);
-
-  const hasData = useMemo(() => rows.length > 0, [rows]);
-
-  const fmt = (iso: string) =>
-    new Date(iso).toLocaleString("pt-BR", {
-      dateStyle: "short",
-      timeStyle: "short",
-    });
+    })();
+  }, []);
 
   return (
     <main className="min-h-screen bg-gray-50 pt-16">
@@ -54,42 +40,51 @@ export default function Page() {
         <div className="flex items-start justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold text-blue-700">Consultas</h1>
-            <p className="text-gray-600 mt-1">Acompanhe as consultas marcadas.</p>
+            <p className="text-gray-600 mt-1">Gerencie as consultas cadastradas.</p>
           </div>
-          <Link
-            href="/consultas/nova"
-            className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+          <button
+            onClick={() => router.push("/consultas/nova")}
+            className="px-4 py-2 rounded bg-blue-600 text-white"
           >
             + Nova Consulta
-          </Link>
+          </button>
         </div>
 
         <div className="bg-white rounded-lg border shadow overflow-x-auto">
           {loading ? (
-            <div className="p-6 text-center text-gray-600">Carregando…</div>
-          ) : err ? (
-            <div className="p-6 text-center text-red-600">{err}</div>
-          ) : !hasData ? (
-            <div className="p-6 text-center text-gray-600">
-              Nenhuma consulta cadastrada.
-            </div>
+            <div className="p-4 text-center">Carregando…</div>
           ) : (
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <Th>Data/Hora</Th>
-                  <Th>Paciente</Th>
-                  <Th>Médico</Th>
-                  <Th>Motivo</Th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Data/Hora</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Paciente</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Médico</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Motivo</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Ações</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {rows.map((c) => (
+                {items.map((c) => (
                   <tr key={String(c.id)} className="hover:bg-gray-50">
-                    <Td>{fmt(c.dataHora)}</Td>
-                    <Td>{c.paciente?.nome ?? "—"}</Td>
-                    <Td>{c.medico?.nome ?? "—"}</Td>
-                    <Td>{c.motivo ?? "—"}</Td>
+                    <td className="px-6 py-4 text-sm">
+                      {new Date(c.dataHora).toLocaleString("pt-BR")}
+                    </td>
+                    <td className="px-6 py-4 text-sm">
+                      {c.paciente?.nome ?? `#${c.pacienteId ?? "—"}`}
+                    </td>
+                    <td className="px-6 py-4 text-sm">
+                      {c.medico?.nome ?? `#${c.medicoId ?? "—"}`}
+                    </td>
+                    <td className="px-6 py-4 text-sm">{c.motivo ?? "—"}</td>
+                    <td className="px-6 py-4 text-right">
+                      <button
+                        onClick={() => router.push(`/consultas/${c.id}`)}
+                        className="px-2 py-1 border rounded"
+                      >
+                        Ver
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -99,15 +94,4 @@ export default function Page() {
       </div>
     </main>
   );
-}
-
-function Th({ children }: { children: React.ReactNode }) {
-  return (
-    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-      {children}
-    </th>
-  );
-}
-function Td({ children }: { children: React.ReactNode }) {
-  return <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{children}</td>;
 }
