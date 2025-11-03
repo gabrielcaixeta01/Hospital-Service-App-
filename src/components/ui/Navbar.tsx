@@ -17,7 +17,7 @@ const SECTIONS: { key: SectionKey; label: string; path?: string }[] = [
   { key: "medicos", label: "Médicos", path: "/medicos" },
   { key: "consultas", label: "Consultas", path: "/consultas" },
   { key: "internacoes", label: "Internações", path: "/internacoes" },
-  { key: "relatorios", label: "Relatórios", path: "/relatorios/agenda-medico" },
+  { key: "relatorios", label: "Relatórios", path: "/relatorios" },
 ];
 
 export default function Navbar() {

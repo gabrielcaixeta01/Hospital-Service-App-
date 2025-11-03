@@ -216,7 +216,7 @@ export default function DashboardPage() {
         <Card
           title="Relatórios"
           desc="Agenda por médico, ocupação de leitos e atendimentos."
-          href="/relatorios/agenda-medico"
+          href="/relatorios"
           actions={[
             { label: "Agenda Médico", href: "/relatorios/agenda-medico" },
             { label: "Leitos", href: "/relatorios/leitos" },
