@@ -1,8 +1,24 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
+/* ---------- Helpers ---------- */
+const API_BASE =
+  (process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") as string) || ""; // se vazio, usa /api
+
+const api = (path: string) =>
+  fetch(`${API_BASE ? API_BASE : ""}${API_BASE ? "" : "/api"}${path}`, {
+    headers: { "Content-Type": "application/json" },
+    cache: "no-store",
+  });
+
+/* ---------- Tipos (mínimos) ---------- */
+type Paciente = { id: number };
+type Consulta = { id: number; dataHora?: string | null; data?: string | null };
+type Internacao = { id: number; dataAlta?: string | null };
+
+/* ---------- Card reutilizável ---------- */
 const Card = ({
   title,
   desc,
@@ -40,6 +56,87 @@ const Card = ({
 );
 
 export default function DashboardPage() {
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState<string>("");
+
+  const [pacientesCount, setPacientesCount] = useState<number | null>(null);
+  const [consultasHojeCount, setConsultasHojeCount] = useState<number | null>(
+    null
+  );
+  const [leitosOcupadosCount, setLeitosOcupadosCount] = useState<number | null>(
+    null
+  );
+  const [examesPendentes] = useState<string>("—"); // placeholder (ainda não temos endpoint de exames)
+
+  useEffect(() => {
+    const run = async () => {
+      try {
+        setLoading(true);
+        setErr("");
+
+        // Busca em paralelo; se algum falhar, seguimos com os outros
+        const results = await Promise.allSettled([
+          api("/pacientes"),
+          api("/consultas"),
+          api("/internacoes"),
+        ]);
+
+        // Pacientes
+        if (results[0].status === "fulfilled" && results[0].value.ok) {
+          const data: Paciente[] = await results[0].value.json();
+          setPacientesCount(data.length);
+        } else {
+          setPacientesCount(null);
+        }
+
+        // Consultas hoje (tenta chave dataHora; se não tiver, usa data)
+        if (results[1].status === "fulfilled" && results[1].value.ok) {
+          const cons: Consulta[] = await results[1].value.json();
+          const today = new Date();
+          const qtd = cons.filter((c) => {
+            const stamp = (c.dataHora ?? c.data ?? null) as string | null;
+            if (!stamp) return false;
+            const d = new Date(stamp);
+            return (
+              d.getFullYear() === today.getFullYear() &&
+              d.getMonth() === today.getMonth() &&
+              d.getDate() === today.getDate()
+            );
+          }).length;
+          setConsultasHojeCount(qtd);
+        } else {
+          setConsultasHojeCount(null);
+        }
+
+        // Leitos ocupados = internações com dataAlta null
+        if (results[2].status === "fulfilled" && results[2].value.ok) {
+          const ints: Internacao[] = await results[2].value.json();
+          const ativos = ints.filter((i) => !i.dataAlta).length;
+          setLeitosOcupadosCount(ativos);
+        } else {
+          setLeitosOcupadosCount(null);
+        }
+      } catch (e: unknown) {
+        console.error(e);
+        setErr("Falha ao carregar indicadores.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    run();
+  }, []);
+
+  const KPIs = useMemo(
+    () => [
+      { label: "Pacientes", value: pacientesCount ?? "—" },
+      { label: "Consultas hoje", value: consultasHojeCount ?? "—" },
+      { label: "Leitos ocupados", value: leitosOcupadosCount ?? "—" },
+      { label: "Exames pendentes", value: examesPendentes },
+    ],
+    [pacientesCount, consultasHojeCount, leitosOcupadosCount, examesPendentes]
+  );
+
   return (
     <section className="max-w-6xl mx-auto px-6">
       {/* Header */}
@@ -49,6 +146,11 @@ export default function DashboardPage() {
           <p className="text-gray-600">
             Bem-vindo! Use os atalhos para navegar.
           </p>
+          {err && (
+            <p className="text-sm mt-1 text-red-600">
+              {err} (alguns cartões podem mostrar “—”)
+            </p>
+          )}
         </div>
         <div className="flex gap-2">
           <Link
@@ -66,21 +168,16 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* KPIs (estáticos por enquanto; depois ligamos à API) */}
+      {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {[
-          { label: "Pacientes", value: "—" },
-          { label: "Consultas hoje", value: "—" },
-          { label: "Leitos ocupados", value: "—" },
-          { label: "Exames pendentes", value: "—" },
-        ].map((k) => (
+        {KPIs.map((k) => (
           <div
             key={k.label}
             className="rounded-2xl border bg-white p-5 shadow-sm"
           >
             <div className="text-sm text-gray-500">{k.label}</div>
             <div className="text-2xl font-semibold text-gray-800 mt-1">
-              {k.value}
+              {loading ? "…" : k.value}
             </div>
           </div>
         ))}
