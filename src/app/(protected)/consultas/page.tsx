@@ -1,131 +1,113 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
-const MOCK = [
-  {
-    id: 1,
-    paciente: "João da Silva",
-    medico: "Dr. Carlos",
-    data: "2025-10-21",
-    horario: "09:00",
-    status: "Agendada",
-  },
-  {
-    id: 2,
-    paciente: "Ana Oliveira",
-    medico: "Dra. Maria",
-    data: "2025-10-21",
-    horario: "10:30",
-    status: "Realizada",
-  },
-];
+interface Item {
+  id: number | string;
+  dataHora: string; // ISO UTC vindo do back
+  motivo?: string | null;
+  notas?: string | null;
+  medico: { id: number | string; nome: string };
+  paciente: { id: number | string; nome: string };
+}
 
 export default function Page() {
+  const [rows, setRows] = useState<Item[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState("");
+
+  const API_BASE =
+    process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ||
+    "http://localhost:4000/api/v1";
+
+  useEffect(() => {
+    const fetchAll = async () => {
+      try {
+        setLoading(true);
+        setErr("");
+        const res = await fetch(`${API_BASE}/consultas`, { cache: "no-store" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        setRows(Array.isArray(data) ? data : []);
+      } catch (e: unknown) {
+        console.error(e);
+        setErr("Não foi possível carregar as consultas.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAll();
+  }, [API_BASE]);
+
+  const hasData = useMemo(() => rows.length > 0, [rows]);
+
+  const fmt = (iso: string) =>
+    new Date(iso).toLocaleString("pt-BR", {
+      dateStyle: "short",
+      timeStyle: "short",
+    });
+
   return (
     <main className="min-h-screen bg-gray-50 pt-16">
       <div className="w-full max-w-6xl px-6 py-10 mx-auto">
         <div className="flex items-start justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold text-blue-700">Consultas</h1>
-            <p className="text-gray-600 mt-1">Agende e gerencie consultas.</p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Link
-              href="/consultas/novo"
-              className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
-            >
-              + Agendar Consulta
-            </Link>
-          </div>
+            <p className="text-gray-600 mt-1">Acompanhe as consultas marcadas.</p>
+          <Link
+            href="/consultas/nova"
+            className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+          >
+            + Nova Consulta
+          </Link>
         </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          {[
-            { label: "Consultas hoje", value: MOCK.length },
-            { label: "Agendadas", value: 1 },
-            { label: "Realizadas", value: 1 },
-            { label: "Canceladas", value: 0 },
-          ].map((k) => (
-            <div
-              key={k.label}
-              className="rounded-2xl border bg-white p-4 shadow-sm"
-            >
-              <div className="text-sm text-gray-500">{k.label}</div>
-              <div className="text-2xl font-semibold text-gray-800 mt-1">
-                {k.value}
-              </div>
-            </div>
-          ))}
         </div>
 
         <div className="bg-white rounded-lg border shadow overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Horário
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Paciente
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Médico
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Data
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Ações
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {MOCK.map((c) => (
-                <tr key={c.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {c.horario}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {c.paciente}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {c.medico}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {c.data}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        c.status === "Realizada"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-blue-100 text-blue-800"
-                      }`}
-                    >
-                      {c.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                    <div className="flex items-center justify-end gap-2">
-                      <Link
-                        href={`/consultas/${c.id}`}
-                        className="px-2 py-1 text-sm border rounded"
-                      >
-                        Editar
-                      </Link>
-                    </div>
-                  </td>
+          {loading ? (
+            <div className="p-6 text-center text-gray-600">Carregando…</div>
+          ) : err ? (
+            <div className="p-6 text-center text-red-600">{err}</div>
+          ) : !hasData ? (
+            <div className="p-6 text-center text-gray-600">
+              Nenhuma consulta cadastrada.
+            </div>
+          ) : (
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <Th>Data/Hora</Th>
+                  <Th>Paciente</Th>
+                  <Th>Médico</Th>
+                  <Th>Motivo</Th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {rows.map((c) => (
+                  <tr key={String(c.id)} className="hover:bg-gray-50">
+                    <Td>{fmt(c.dataHora)}</Td>
+                    <Td>{c.paciente?.nome ?? "—"}</Td>
+                    <Td>{c.medico?.nome ?? "—"}</Td>
+                    <Td>{c.motivo ?? "—"}</Td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </main>
   );
+}
+
+function Th({ children }: { children: React.ReactNode }) {
+  return (
+    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+      {children}
+    </th>
+  );
+}
+function Td({ children }: { children: React.ReactNode }) {
+  return <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{children}</td>;
 }
