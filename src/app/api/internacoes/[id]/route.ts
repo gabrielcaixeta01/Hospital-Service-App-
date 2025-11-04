@@ -51,11 +51,8 @@ const INTERNACOES = [
   },
 ];
 
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  const id = parseInt(params.id);
+export async function GET(request: Request, context: unknown) {
+  const id = parseInt(((context as { params?: { id?: string } })?.params?.id) || "");
   const internacao = INTERNACOES.find((i) => i.id === id);
 
   if (!internacao) {
@@ -68,11 +65,8 @@ export async function GET(
   return NextResponse.json(internacao);
 }
 
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  const id = parseInt(params.id);
+export async function PUT(request: Request, context: unknown) {
+  const id = parseInt(((context as { params?: { id?: string } })?.params?.id) || "");
   const body = await request.json();
   const index = INTERNACOES.findIndex((i) => i.id === id);
 
@@ -87,11 +81,8 @@ export async function PUT(
   return NextResponse.json(INTERNACOES[index]);
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  const id = parseInt(params.id);
+export async function DELETE(request: Request, context: unknown) {
+  const id = parseInt(((context as { params?: { id?: string } })?.params?.id) || "");
   const index = INTERNACOES.findIndex((i) => i.id === id);
 
   if (index === -1) {

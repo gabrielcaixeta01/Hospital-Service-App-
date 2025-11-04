@@ -60,11 +60,8 @@ const CONSULTAS = [
   },
 ];
 
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  const id = parseInt(params.id);
+export async function GET(request: Request, context: unknown) {
+  const id = parseInt(((context as { params?: { id?: string } })?.params?.id) || "");
   const consulta = CONSULTAS.find((c) => c.id === id);
 
   if (!consulta) {
@@ -77,11 +74,8 @@ export async function GET(
   return NextResponse.json(consulta);
 }
 
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  const id = parseInt(params.id);
+export async function PUT(request: Request, context: unknown) {
+  const id = parseInt(((context as { params?: { id?: string } })?.params?.id) || "");
   const body = await request.json();
   const index = CONSULTAS.findIndex((c) => c.id === id);
 
@@ -96,11 +90,8 @@ export async function PUT(
   return NextResponse.json(CONSULTAS[index]);
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  const id = parseInt(params.id);
+export async function DELETE(request: Request, context: unknown) {
+  const id = parseInt(((context as { params?: { id?: string } })?.params?.id) || "");
   const index = CONSULTAS.findIndex((c) => c.id === id);
 
   if (index === -1) {

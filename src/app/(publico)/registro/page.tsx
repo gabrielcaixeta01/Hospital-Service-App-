@@ -27,23 +27,30 @@ export default function RegisterPage() {
     }
 
     try {
-      // TODO: Integrar com o backend
-      // const response = await fetch('/api/auth/register', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(formData)
-      // })
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
+      const url = API_URL ? `${API_URL.replace(/\/+$/, "")}/auth/register` : "/api/auth/register";
 
-      // if (!response.ok) throw new Error('Erro ao criar conta')
-      // const data = await response.json()
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          nome: formData.nome,
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
 
-      // Simular delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || "Erro ao criar conta");
+      }
 
+      // If registration succeeds redirect to login with flag
       router.push("/login?registered=true");
     } catch (err) {
       console.error(err);
-      setError("Erro ao criar conta. Por favor, tente novamente.");
+      setError((err as Error).message || "Erro ao criar conta. Por favor, tente novamente.");
     } finally {
       setLoading(false);
     }

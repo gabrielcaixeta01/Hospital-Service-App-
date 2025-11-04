@@ -25,27 +25,44 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
-
     try {
-      // TODO: Integrar com o backend
-      // Exemplo de como será a integração:
-      // const response = await fetch('/api/auth/login', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(formData)
-      // })
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
+      const url = API_URL ? `${API_URL.replace(/\/+$/, "")}/auth/login` : "/api/auth/login";
 
-      // if (!response.ok) throw new Error('Credenciais inválidas')
-      // const data = await response.json()
-      // localStorage.setItem('token', data.token)
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        // include credentials so servers that set cookies can work (if same-site / CORS configured)
+        credentials: "include",
+        body: JSON.stringify(formData),
+      });
 
-      // Por enquanto, apenas simular um delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (!response.ok) {
+        if (response.status === 401) {
+          setError("Credenciais inválidas");
+        } else {
+          const text = await response.text();
+          setError(text || "Erro ao autenticar");
+        }
+        return;
+      }
 
+      const data = await response.json();
+
+      // Prefer backend to set an HttpOnly cookie. If backend returns a token, store it temporarily in localStorage
+      if (data.token) {
+        try {
+          localStorage.setItem("token", data.token);
+        } catch {
+          // ignore storage errors
+        }
+      }
+
+      // Redirect to protected area
       router.push("/dashboard");
     } catch (err) {
       console.error(err);
-      setError("Email ou senha incorretos");
+      setError("Erro ao autenticar. Tente novamente.");
     } finally {
       setLoading(false);
     }
