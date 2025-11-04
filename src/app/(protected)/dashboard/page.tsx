@@ -160,7 +160,7 @@ export default function DashboardPage() {
             + Novo Paciente
           </Link>
           <Link
-            href="/consultas/novo"
+            href="/consultas/nova"
             className="px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50"
           >
             + Agendar Consulta
@@ -226,7 +226,6 @@ export default function DashboardPage() {
           title="Administração"
           desc="Especialidades, usuários do sistema e configurações."
           href="/admin"
-          actions={[{ label: "Configurar", href: "/admin" }]}
         />
       </div>
     </section>
