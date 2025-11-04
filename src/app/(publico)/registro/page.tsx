@@ -26,6 +26,22 @@ export default function RegisterPage() {
       return;
     }
 
+    // Basic client-side validation to match backend rules and provide quicker feedback
+    const pw = formData.password ?? "";
+    const validationErrors: string[] = [];
+    if (typeof pw !== "string") validationErrors.push("A senha deve ser uma string.");
+    if (pw.length < 8) validationErrors.push("A senha deve ter pelo menos 8 caracteres.");
+    if (!/[a-z]/.test(pw)) validationErrors.push("A senha deve conter pelo menos uma letra minúscula.");
+    if (!/[A-Z]/.test(pw)) validationErrors.push("A senha deve conter pelo menos uma letra maiúscula.");
+    if (!/\d/.test(pw)) validationErrors.push("A senha deve conter pelo menos um número.");
+    if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(pw)) validationErrors.push("A senha deve conter pelo menos um caractere especial.");
+
+    if (validationErrors.length > 0) {
+      setError(validationErrors.join(" "));
+      setLoading(false);
+      return;
+    }
+
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
       const url = API_URL ? `${API_URL.replace(/\/+$/, "")}/auth/register` : "/api/auth/register";
@@ -42,8 +58,21 @@ export default function RegisterPage() {
       });
 
       if (!response.ok) {
-        const text = await response.text();
-        throw new Error(text || "Erro ao criar conta");
+        // Try to parse JSON error payload (some backends return { message: [..] })
+        let bodyText = "Erro ao criar conta";
+        try {
+          const json = await response.json();
+          if (Array.isArray(json?.message)) {
+            bodyText = json.message.join(" ");
+          } else if (typeof json?.message === "string") {
+            bodyText = json.message;
+          } else if (json) {
+            bodyText = JSON.stringify(json);
+          }
+        } catch {
+          bodyText = await response.text().catch(() => bodyText);
+        }
+        throw new Error(bodyText || "Erro ao criar conta");
       }
 
       // If registration succeeds redirect to login with flag
