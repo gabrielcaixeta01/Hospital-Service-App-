@@ -26,15 +26,17 @@ export default function RegisterPage() {
       return;
     }
 
-    // Basic client-side validation to match backend rules and provide quicker feedback
-    const pw = formData.password ?? "";
+    // Robust client-side validation. Coerce to string to avoid unexpected types
+  const rawPw = (formData as { password?: unknown }).password;
+    const pw = rawPw == null ? "" : String(rawPw);
     const validationErrors: string[] = [];
-    if (typeof pw !== "string") validationErrors.push("A senha deve ser uma string.");
+
     if (pw.length < 8) validationErrors.push("A senha deve ter pelo menos 8 caracteres.");
     if (!/[a-z]/.test(pw)) validationErrors.push("A senha deve conter pelo menos uma letra minúscula.");
     if (!/[A-Z]/.test(pw)) validationErrors.push("A senha deve conter pelo menos uma letra maiúscula.");
     if (!/\d/.test(pw)) validationErrors.push("A senha deve conter pelo menos um número.");
-    if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(pw)) validationErrors.push("A senha deve conter pelo menos um caractere especial.");
+    // special character = any non-alphanumeric
+    if (!/[^A-Za-z0-9]/.test(pw)) validationErrors.push("A senha deve conter pelo menos um caractere especial.");
 
     if (validationErrors.length > 0) {
       setError(validationErrors.join(" "));
