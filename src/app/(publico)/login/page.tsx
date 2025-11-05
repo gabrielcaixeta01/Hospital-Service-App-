@@ -53,6 +53,7 @@ export default function LoginPage() {
       if (data.token) {
         try {
           localStorage.setItem("token", data.token);
+          if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
         } catch {
           // ignore storage errors
         }

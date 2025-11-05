@@ -9,7 +9,9 @@ type SectionKey =
   | "medicos"
   | "consultas"
   | "internacoes"
-  | "relatorios";
+  | "relatorios"
+  | "perfil";
+
 
 const SECTIONS: { key: SectionKey; label: string; path?: string }[] = [
   { key: "hero", label: "Início", path: "/dashboard" },
@@ -18,6 +20,7 @@ const SECTIONS: { key: SectionKey; label: string; path?: string }[] = [
   { key: "consultas", label: "Consultas", path: "/consultas" },
   { key: "internacoes", label: "Internações", path: "/internacoes" },
   { key: "relatorios", label: "Relatórios", path: "/relatorios" },
+  { key: "perfil", label: "Perfil", path: "/perfil" },
 ];
 
 export default function Navbar() {
@@ -65,6 +68,7 @@ export default function Navbar() {
         "consultas",
         "internacoes",
         "relatorios",
+        "perfil",
       ];
       let current: SectionKey = "hero";
       for (const id of sectionIds) {
