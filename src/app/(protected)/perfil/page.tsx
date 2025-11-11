@@ -7,12 +7,7 @@ import { useRouter } from "next/navigation";
 const API_BASE = typeof process !== "undefined" && process.env.NEXT_PUBLIC_API_URL
   ? String(process.env.NEXT_PUBLIC_API_URL).replace(/\/+$/, "")
   : "";
-const api = (path: string) =>
-  fetch(`${API_BASE ? API_BASE : ""}${API_BASE ? "" : "/api"}${path}`, {
-    headers: { "Content-Type": "application/json" },
-    cache: "no-store",
-    credentials: "include",
-  });
+// helper `api` removed — we build the specific profile URL below to target /api/v1 when needed
 
 type User = Record<string, unknown> | null;
 
@@ -42,21 +37,31 @@ export default function PerfilPage() {
       setLoading(true);
       setErr("");
 
-      // try localStorage (dev shim)
+      // try localStorage (dev shim) — set as initial state but still fetch server profile
       try {
         const raw = localStorage.getItem("user");
         if (raw) {
-          setUser(JSON.parse(raw));
-          setLoading(false);
-          return;
+          try { setUser(JSON.parse(raw)); } catch { setUser(null); }
+          // don't return: still fetch profile to populate missing fields (nome/criadoEm)
         }
       } catch (e) {
         console.warn("failed to read local user", e);
       }
 
-      // fallback to /auth/me
+      // fallback to backend profile endpoint (prefer /api/v1/auth/profile)
       try {
-        const res = await api("/auth/me");
+        // Build a URL that targets /api/v1/auth/profile when running internal mocks,
+        // or `${API_BASE}/auth/profile` when NEXT_PUBLIC_API_URL is set (may already contain /api/v1).
+        const profileUrl = API_BASE
+          ? `${API_BASE.replace(/\/+$/, "")}/auth/profile`
+          : "/api/v1/auth/profile";
+
+  // include Authorization header when a token exists in localStorage (some backends use Bearer tokens)
+  const tok = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (tok) headers.Authorization = `Bearer ${tok}`;
+
+  const res = await fetch(profileUrl, { credentials: "include", headers });
         if (!res.ok) {
           if (res.status === 401) {
             router.push("/login");
@@ -67,8 +72,34 @@ export default function PerfilPage() {
           setLoading(false);
           return;
         }
-        const data = await res.json();
-        setUser(data.user ?? data);
+
+  const data = await res.json().catch(() => ({}));
+        // backend may return { user: { ... } } or the user object directly
+        const userObj = data.user ?? data;
+        // Normalize fields: prefer 'nome' and 'criadoEm' (Portuguese) but accept common alternatives
+        const normalized: Record<string, unknown> = {
+          ...(userObj ?? {}),
+        };
+
+        // fallback: if nome missing, try to create from email
+        const extractNameFromEmail = (email?: unknown) => {
+          if (!email) return undefined;
+          const s = String(email);
+          const part = s.split("@")[0] ?? "";
+          const cleaned = part.replace(/[._\-]/g, " ").trim();
+          return cleaned ? cleaned.replace(/\b\w/g, (c) => String(c).toUpperCase()) : undefined;
+        };
+
+        if (!normalized.nome && normalized.email) {
+          normalized.nome = extractNameFromEmail(normalized.email);
+        }
+        // map createdAt -> criadoEm if present
+        if (!normalized.criadoEm && (normalized.createdAt || normalized.created_at)) {
+          normalized.criadoEm = normalized.createdAt ?? normalized.created_at;
+        }
+
+        setUser(normalized);
+        try { localStorage.setItem("user", JSON.stringify(normalized)); } catch {}
       } catch (e) {
         console.error(e);
         setErr("Erro ao buscar dados do usuário");
@@ -124,7 +155,7 @@ export default function PerfilPage() {
             </div>
             <div>
               <div className="text-xs text-gray-500">Data de entrada</div>
-              <div className="text-lg font-medium text-gray-800">{formatDateField(user as Record<string, unknown>, ["createdAt","created_at","joinedAt","joined_at"]) ?? "—"}</div>
+              <div className="text-lg font-medium text-gray-800">{formatDateField(user as Record<string, unknown>, ["criadoEm","criado_em","createdAt","created_at","joinedAt","joined_at"]) ?? "—"}</div>
             </div>
           </div>
         ) : (
