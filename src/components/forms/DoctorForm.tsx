@@ -60,25 +60,41 @@ export default function DoctorForm({
       try {
         setLoadingEsp(true);
         setError("");
+        // include auth if available (token in localStorage) and allow cookies
+        const headers: Record<string, string> = { "Content-Type": "application/json" };
+        try {
+          const tok = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+          if (tok) headers["Authorization"] = `Bearer ${tok}`;
+        } catch {
+          // ignore localStorage errors
+        }
+
         const res = await fetch(`${API_BASE}/especialidades`, {
-          headers: { "Content-Type": "application/json" },
+          headers,
           cache: "no-store",
+          credentials: "include",
         });
         if (!res.ok) {
+          if (res.status === 401) {
+            // Not authorized - redirect to login so user can re-authenticate
+            // (keep a helpful message)
+            router.push("/login");
+            return;
+          }
           const txt = await res.text();
           throw new Error(txt || "Falha ao carregar especialidades");
         }
         const data: Especialidade[] = await res.json();
         setEspecialidades(data);
-      } catch (e: unknown) {
-        console.error(e);
-        setError((e as Error)?.message || "Erro ao carregar especialidades");
+      } catch (err: unknown) {
+        console.error(err);
+        setError((err as Error)?.message || "Erro ao carregar especialidades");
       } finally {
         setLoadingEsp(false);
       }
     };
     load();
-  }, [API_BASE]);
+  }, [API_BASE, router]);
 
   const hasEspecialidades = useMemo(
     () => especialidades.length > 0,
