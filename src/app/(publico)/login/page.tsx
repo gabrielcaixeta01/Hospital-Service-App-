@@ -49,14 +49,12 @@ export default function LoginPage() {
 
       const data = await response.json();
 
-      // Prefer backend to set an HttpOnly cookie. If backend returns a token, store it temporarily in localStorage
-      if (data.token) {
-        try {
-          localStorage.setItem("token", data.token);
-          if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
-        } catch {
-          // ignore storage errors
-        }
+      // Prefer backend to set an HttpOnly cookie. Store token and/or user in localStorage when provided by the API.
+      try {
+        if (data.token) localStorage.setItem("token", data.token);
+        if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
+      } catch {
+        // ignore storage errors
       }
 
       // Redirect to protected area
