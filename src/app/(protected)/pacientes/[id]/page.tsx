@@ -16,6 +16,15 @@ interface Paciente {
   cpf?: string;
 }
 
+function dateOnlyToBR(iso?: string | null) {
+  if (!iso) return undefined;
+  const datePart = String(iso).split("T")[0];
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(datePart);
+  if (!m) return undefined;
+  const [, y, mo, d] = m;
+  return `${d}/${mo}/${y}`;
+}
+
 export default function Page() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
@@ -43,13 +52,13 @@ export default function Page() {
         if (!res.ok) throw new Error("not found");
         const data = await res.json();
 
+        const rawDate = data.nascimento ?? "";
         setPaciente({
           id: data.id,
           nome: data.nome,
           cpf: data.cpf,
-          dataNascimento: data.nascimento
-            ? new Date(data.nascimento).toISOString().split("T")[0]
-            : "",
+          // keep a date-only string (YYYY-MM-DD) to avoid timezone shifts when displaying
+          dataNascimento: rawDate ? String(rawDate).split("T")[0] : "",
           sexo: data.sexo,
           telefone: data.telefone,
           email: data.email,
@@ -234,9 +243,7 @@ export default function Page() {
                 label="Data de Nascimento"
                 value={
                   paciente.dataNascimento
-                    ? new Date(paciente.dataNascimento).toLocaleDateString(
-                        "pt-BR"
-                      )
+                    ? dateOnlyToBR(paciente.dataNascimento) || "—"
                     : "—"
                 }
               />
