@@ -134,9 +134,9 @@ export default function AdminPage() {
   return (
     <section className="max-w-6xl mx-auto px-6 py-8">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-blue-700">Administração</h1>
+        <h1 className="text-3xl font-bold text-blue-700">Gerencie os leitos</h1>
         <p className="text-gray-600">
-          Gerencie recursos do sistema (leitos, etc.).
+          Crie, veja, altere e delete os leitos do hospital.
         </p>
         {err && <p className="text-sm text-red-600 mt-2">{err}</p>}
       </div>

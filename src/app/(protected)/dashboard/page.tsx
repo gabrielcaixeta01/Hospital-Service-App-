@@ -223,9 +223,9 @@ export default function DashboardPage() {
           ]}
         />
         <Card
-          title="Administração"
-          desc="Especialidades, usuários do sistema e configurações."
-          href="/admin"
+          title="Leitos"
+          desc="Gerencie os leitos do sistema."
+          href="/leitos"
         />
       </div>
     </section>
