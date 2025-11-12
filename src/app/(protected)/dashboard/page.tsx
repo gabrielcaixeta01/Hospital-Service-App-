@@ -227,6 +227,11 @@ export default function DashboardPage() {
           desc="Gerencie os leitos do sistema."
           href="/leitos"
         />
+         <Card
+          title="Especialidades"
+          desc="Configure as especialidades para cada médico."
+          href="/especialidades"
+        />
       </div>
     </section>
   );
