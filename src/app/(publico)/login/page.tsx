@@ -51,7 +51,7 @@ export default function LoginPage() {
 
       // Prefer backend to set an HttpOnly cookie. Store token and/or user in localStorage when provided by the API.
       try {
-        if (data.token) localStorage.setItem("token", data.token);
+        if (data.access_token) localStorage.setItem("token", data.access_token);
         if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
       } catch {
         // ignore storage errors
