@@ -9,9 +9,9 @@ type SectionKey =
   | "medicos"
   | "consultas"
   | "internacoes"
+  | "leitos"
   | "relatorios"
   | "perfil";
-
 
 const SECTIONS: { key: SectionKey; label: string; path?: string }[] = [
   { key: "hero", label: "Início", path: "/dashboard" },
@@ -19,6 +19,7 @@ const SECTIONS: { key: SectionKey; label: string; path?: string }[] = [
   { key: "medicos", label: "Médicos", path: "/medicos" },
   { key: "consultas", label: "Consultas", path: "/consultas" },
   { key: "internacoes", label: "Internações", path: "/internacoes" },
+  { key: "leitos", label: "Leitos", path: "/leitos" },
   { key: "relatorios", label: "Relatórios", path: "/relatorios" },
   { key: "perfil", label: "Perfil", path: "/perfil" },
 ];
@@ -48,151 +49,96 @@ export default function Navbar() {
 
   // Fecha dropdown com tecla Escape
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setIsMobileDropdownOpen(false);
-    };
-    if (isMobileDropdownOpen) {
-      document.addEventListener("keydown", handleKeyDown);
-      return () => document.removeEventListener("keydown", handleKeyDown);
-    }
-    return;
+    if (!isMobileDropdownOpen) return;
+    const handle = (e: KeyboardEvent) => e.key === "Escape" && setIsMobileDropdownOpen(false);
+    document.addEventListener("keydown", handle);
+    return () => document.removeEventListener("keydown", handle);
   }, [isMobileDropdownOpen]);
 
-  // Observa a seção visível (para sublinhar item ativo)
-  useEffect(() => {
-    const handleScroll = () => {
-      const sectionIds: SectionKey[] = [
-        "hero",
-        "pacientes",
-        "medicos",
-        "consultas",
-        "internacoes",
-        "relatorios",
-        "perfil",
-      ];
-      let current: SectionKey = "hero";
-      for (const id of sectionIds) {
-        const el = document.getElementById(id);
-        if (el) {
-          const rect = el.getBoundingClientRect();
-          if (rect.top <= 80 && rect.bottom > 80) {
-            current = id;
-            break;
-          }
-        }
-      }
-      setActiveSection(current);
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
   const goTo = (key: SectionKey) => {
-    // Tenta rolar para a seção; se não existir, navega para rota correspondente
-    const section = document.getElementById(key);
-    if (section) {
-      const nav = document.querySelector("nav");
-      const navHeight = nav ? (nav as HTMLElement).offsetHeight : 0;
-      const y =
-        section.getBoundingClientRect().top + window.pageYOffset - navHeight;
-      window.scrollTo({ top: y, behavior: "smooth" });
-    } else {
-      const path = SECTIONS.find((s) => s.key === key)?.path;
-      if (path) router.push(path);
-    }
-    setIsMobileDropdownOpen(false);
+    const path = SECTIONS.find((s) => s.key === key)?.path;
+    if (path) router.push(path);
     setActiveSection(key);
+    setIsMobileDropdownOpen(false);
   };
 
   return (
-    <nav className="fixed top-0 left-0 w-full z-50 bg-white/70 backdrop-blur-md py-2 px-4 shadow-sm">
-      <div className="flex items-center w-full max-w-7xl mx-auto">
-        {/* Menu (single source) - renders as dropdown on mobile and inline on md+ */}
-        <div className="relative md:hidden">
-          {/* Hamburger (visible on mobile) */}
-          <button
-            ref={menuButtonRef}
-            onMouseDown={(e) => e.stopPropagation()}
-            onClick={() => setIsMobileDropdownOpen((open) => !open)}
-            className="p-2 rounded-lg hover:bg-gray-200/70 transition-all duration-300 relative z-50"
-            aria-label="Abrir menu"
-            aria-expanded={isMobileDropdownOpen}
-            aria-controls="navbar-menu"
-          >
-            <svg
-              className="w-7 h-7"
-              fill="none"
-              strokeWidth={2}
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M4 6h16M4 12h16M4 18h16"
-              />
-            </svg>
-          </button>
-        </div>
+    <nav className="fixed top-0 left-0 w-full z-50 bg-white/70 backdrop-blur-lg border-b border-slate-200/70 shadow-sm">
+      <div className="flex items-center justify-between w-full max-w-7xl mx-auto py-3 px-6">
 
-        {/* Logo / título */}
+        {/* Logo */}
         <button
           onClick={() => goTo("hero")}
-          className="text-lg sm:text-xl font-semibold text-blue-700 mx-auto"
+          className="flex flex-col text-left group"
         >
-          🏥 Hospital Service
+          <span className="text-xl font-bold tracking-tight text-slate-800 group-hover:text-blue-700 transition">
+            Hosp<span className="text-blue-700">Care</span>
+          </span>
+          <span className="text-[11px] text-slate-500 -mt-1">
+            Gestão de Pacientes e Internações
+          </span>
         </button>
 
-        {/* Desktop menu */}
-        <div className="hidden md:block md:ml-auto">
-          <div className="flex items-center gap-6">
-            {SECTIONS.map((item) => (
+        {/* Menu Desktop */}
+        <div className="hidden md:flex items-center gap-7">
+          {SECTIONS.map((item) => {
+            const isActive = activeSection === item.key;
+            return (
               <button
                 key={item.key}
                 onClick={() => goTo(item.key)}
-                className={`text-base font-medium text-gray-800 cursor-pointer transition-colors duration-300 px-2 py-1 rounded focus:outline-none ${
-                  activeSection === item.key
-                    ? "text-blue-700 border-b-2 border-blue-700"
-                    : "hover:text-blue-700 border-transparent"
-                }`}
+                className="relative text-sm font-medium text-slate-700 hover:text-blue-700 transition-all"
               >
                 {item.label}
+
+                {/* underline animado */}
+                <span
+                  className={`absolute left-0 -bottom-1 h-[2px] bg-blue-600 rounded-full transition-all duration-300 ${
+                    isActive ? "w-full opacity-100" : "w-0 opacity-0 group-hover:w-full"
+                  }`}
+                />
               </button>
-            ))}
-          </div>
+            );
+          })}
         </div>
 
-        {/* Mobile menu container */}
-        <div className="md:hidden">
-          <div
-            id="navbar-menu"
-            ref={mobileDropdownRef}
-            role="menu"
-            aria-hidden={!isMobileDropdownOpen}
-            className={`fixed top-14 left-4 w-60 bg-white rounded-xl shadow-2xl py-4 px-4 z-40 flex flex-col gap-2 transform transition-all duration-200 ease-out md:relative md:top-0 md:left-0 md:mt-0 md:w-auto md:bg-transparent md:shadow-none md:flex-row md:items-center md:gap-6 md:px-0 md:py-0 ${
-              isMobileDropdownOpen
-                ? "opacity-100 translate-y-0 scale-100 pointer-events-auto md:opacity-100 md:translate-y-0 md:scale-100 md:pointer-events-auto"
-                : "opacity-0 -translate-y-1 scale-95 pointer-events-none md:opacity-100 md:translate-y-0 md:scale-100 md:pointer-events-auto"
-            }`}
+        {/* Mobile hamburger */}
+        <button
+          ref={menuButtonRef}
+          onClick={() => setIsMobileDropdownOpen((s) => s !== true)}
+          className="md:hidden p-2 rounded-lg hover:bg-slate-200/60 transition"
+        >
+          <svg
+            className="w-7 h-7 text-slate-700"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
           >
-            {SECTIONS.map((item) => (
-              <button
-                key={item.key}
-                onClick={() => goTo(item.key)}
-                className={`w-full text-left text-base font-medium text-gray-800 cursor-pointer transition-colors duration-300 px-2 py-2 rounded md:w-auto md:text-base md:px-2 md:py-1 md:focus:outline-none ${
-                  activeSection === item.key
-                    ? "text-blue-700 md:border-b-2 md:border-blue-700"
-                    : "hover:text-blue-700 md:border-transparent"
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </div>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
       </div>
+
+      {/* Mobile dropdown */}
+      {isMobileDropdownOpen && (
+        <div
+          ref={mobileDropdownRef}
+          className="md:hidden absolute top-16 left-0 w-full bg-white shadow-xl rounded-b-xl p-4 flex flex-col gap-3 transition-all"
+        >
+          {SECTIONS.map((item) => (
+            <button
+              key={item.key}
+              onClick={() => goTo(item.key)}
+              className={`text-base py-2 rounded-lg text-slate-700 hover:bg-slate-100 transition ${
+                activeSection === item.key ? "text-blue-700 font-semibold" : ""
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      )}
     </nav>
   );
 }
