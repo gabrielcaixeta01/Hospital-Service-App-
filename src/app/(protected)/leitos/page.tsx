@@ -35,10 +35,11 @@ interface CellProps {
 }
 
 /* ---- Switch estilizado (coluna fixa, sem tremer) ---- */
-function Switch({ checked, onChange }: { checked: boolean; onChange: () => void }) {
+function Switch({ checked, onChange, disabled }: { checked: boolean; onChange: () => void; disabled?: boolean }) {
   return (
     <button
       type="button"
+      disabled={disabled}
       onClick={onChange}
       className={`relative inline-flex h-6 w-11 min-w-[44px] items-center rounded-full transition-colors duration-200
         ${checked ? "bg-blue-600" : "bg-gray-300"}`}
@@ -55,7 +56,6 @@ export default function AdminPage() {
   const [leitos, setLeitos] = useState<Leito[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
-
   const [codigo, setCodigo] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -156,7 +156,7 @@ export default function AdminPage() {
   /* -------- Alternar manutenção -------- */
   async function toggleManutencao(leito: Leito) {
     const token = localStorage.getItem("token");
-    const ligar = leito.status !== "manutencao";
+    const entrandoEmManutencao = leito.status !== "manutencao";
 
     try {
       const res = await fetch(apiUrl(`/leitos/${leito.id}`), {
@@ -166,24 +166,29 @@ export default function AdminPage() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          status: ligar ? "manutencao" : "livre",
+          status: entrandoEmManutencao ? "manutencao" : "livre",
         }),
       });
 
       if (!res.ok) throw new Error(await res.text());
 
-      const updated = (await res.json()) as Leito;
+      // Backend devolve o leito atualizado, MAS vamos recalcular o status correto
+      const atualizado = (await res.json()) as Leito;
+
+      // 🔥 Recalcular status REAL com internações,
+      // do MESMO JEITO que o useEffect faz.
+      const ativa =
+        atualizado.internacoes &&
+        atualizado.internacoes.some((i) => i.dataAlta === null);
+
+      const statusReal = ativa
+        ? "ocupado"
+        : atualizado.status.toLowerCase() === "manutencao"
+        ? "manutencao"
+        : "livre";
 
       setLeitos((prev) =>
-        prev.map((x) =>
-          x.id === leito.id
-            ? {
-                ...updated,
-                status: updated.status.toLowerCase(),
-                internacoes: leito.internacoes, // mantém internacoes locais
-              }
-            : x
-        )
+        prev.map((x) => (x.id === leito.id ? { ...atualizado, status: statusReal } : x))
       );
     } catch (e) {
       console.error(e);
@@ -306,7 +311,11 @@ export default function AdminPage() {
                       <div className="w-20 flex justify-center">
                         <Switch
                           checked={l.status === "manutencao"}
-                          onChange={() => toggleManutencao(l)}
+                          disabled={l.status === "ocupado"}
+                          onChange={() => {
+                            if (l.status === "ocupado") return;
+                            toggleManutencao(l);
+                          }}
                         />
                       </div>
                     </Td>
