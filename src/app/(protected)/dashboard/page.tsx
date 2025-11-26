@@ -19,69 +19,6 @@ type Consulta = { id: number; dataHora?: string | null; data?: string | null };
 type Internacao = { id: number; dataAlta?: string | null };
 type Exame = { id: number; resultado?: string | null };
 
-// --- Gráfico de Barras Minimalista + Informativo ---
-const BarChart = ({
-  values,
-  labels,
-  height = 120,
-}: {
-  values: number[];
-  labels: string[];
-  height?: number;
-}) => {
-  const max = Math.max(...values);
-
-  return (
-    <div className="w-full">
-      <svg
-        width="100%"
-        height={height}
-        viewBox={`0 0 ${values.length * 40} ${height}`}
-        className="overflow-visible"
-      >
-        {/* Barras */}
-        {values.map((v, i) => {
-          const barHeight = (v / max) * (height - 30);
-          return (
-            <g key={i} transform={`translate(${i * 40}, 0)`}>
-              {/* Barra */}
-              <rect
-                y={height - barHeight}
-                width="28"
-                height={barHeight}
-                rx="4"
-                fill="#2563eb"
-                className="transition-all duration-300 hover:opacity-75"
-              />
-
-              {/* Valor acima da barra */}
-              <text
-                x="14"
-                y={height - barHeight - 6}
-                textAnchor="middle"
-                fontSize="10"
-                fill="#374151"
-              >
-                {v}
-              </text>
-
-              {/* Label abaixo */}
-              <text
-                x="14"
-                y={height - 4}
-                textAnchor="middle"
-                fontSize="10"
-                fill="#FFFFFF"
-              >
-                {labels[i]}
-              </text>
-            </g>
-          );
-        })}
-      </svg>
-    </div>
-  );
-};
 
 /* ---------- Card ---------- */
 const Card = ({
@@ -274,15 +211,6 @@ export default function DashboardPage() {
           title="Relatórios"
           desc="Dashboards de ocupação e produtividade."
           href="/relatorios"
-        />
-      </div>
-
-      {/* MINI GRÁFICO */}
-      <div className="rounded-lg border bg-white shadow-sm p-6">
-        <h2 className="text-lg font-normal text-gray-800 mb-3">Atendimentos (últimos dias)</h2>
-        <BarChart
-          values={[5, 6, 4, 7, 10, 8, 12, 9]}
-          labels={["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom", "Hoje"]}
         />
       </div>
     </section>
