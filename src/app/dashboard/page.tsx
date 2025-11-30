@@ -207,6 +207,11 @@ export default function DashboardPage() {
           desc="Dashboards de ocupação e produtividade."
           href="/relatorios"
         />
+        <Card
+          title="Especialidades"
+          desc="Gerencie as especialidades médicas."
+          href="/especialidades"
+        />
       </div>
     </section>
   );

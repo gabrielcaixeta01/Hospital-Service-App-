@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getJson, api, deleteJson } from "../../utils/api";
+import { getJson, deleteJson } from "../../utils/api";
 
 type IdLike = number | string;
 

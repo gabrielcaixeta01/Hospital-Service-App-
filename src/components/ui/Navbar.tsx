@@ -11,7 +11,8 @@ type SectionKey =
   | "internacoes"
   | "leitos"
   | "relatorios"
-  | "exames";
+  | "exames"
+  | "especialidades";
 
 const SECTIONS: { key: SectionKey; label: string; path?: string }[] = [
   { key: "hero", label: "Início", path: "/dashboard" },
@@ -22,6 +23,7 @@ const SECTIONS: { key: SectionKey; label: string; path?: string }[] = [
   { key: "exames", label: "Exames", path: "/exames" },
   { key: "leitos", label: "Leitos", path: "/leitos" },
   { key: "relatorios", label: "Relatórios", path: "/relatorios" },
+  { key: "especialidades", label: "Especialidades", path: "/especialidades" },
   
 ];
 
