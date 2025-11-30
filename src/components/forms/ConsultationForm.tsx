@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { isoUtcToLocalInput, localInputToIsoUtc } from "@/lib/datetime";
 import { useRouter } from "next/navigation";
+import { getJson, postJson, api } from "../../utils/api";
 
 type IdLike = number | string;
 
@@ -50,13 +51,10 @@ export default function ConsultationForm({
       try {
         setLoading(true);
         setErr("");
-        const [mRes, pRes] = await Promise.all([
-          fetch(`${API_BASE}/medicos`, { cache: "no-store" }),
-          fetch(`${API_BASE}/pacientes`, { cache: "no-store" }),
+        const [m, p] = await Promise.all([
+          getJson<Option[]>("/medicos"),
+          getJson<Option[]>("/pacientes"),
         ]);
-        if (!mRes.ok || !pRes.ok) throw new Error("Falha ao carregar catálogos");
-        const m: Option[] = await mRes.json();
-        const p: Option[] = await pRes.json();
         setMedicos(m.map((x: Option) => ({ id: x.id, nome: x.nome })));
         setPacientes(p.map((x: Option) => ({ id: x.id, nome: x.nome })));
       } catch (e: unknown) {
@@ -100,19 +98,16 @@ export default function ConsultationForm({
       };
 
       const method = mode === "edit" ? "PATCH" : "POST";
-      const url =
-        mode === "edit" && defaultValues.id
-          ? `${API_BASE}/consultas/${defaultValues.id}`
-          : `${API_BASE}/consultas`;
+      const path = mode === "edit" && defaultValues.id ? `/consultas/${defaultValues.id}` : "/consultas";
 
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(txt || "Falha ao salvar consulta");
+      if (method === "POST") {
+        await postJson(path, payload);
+      } else {
+        const res = await api(path, { method, body: JSON.stringify(payload) });
+        if (!res.ok) {
+          const txt = await res.text();
+          throw new Error(txt || "Falha ao salvar consulta");
+        }
       }
       alert(mode === "edit" ? "Consulta atualizada!" : "Consulta criada!");
       if (onSuccess) {

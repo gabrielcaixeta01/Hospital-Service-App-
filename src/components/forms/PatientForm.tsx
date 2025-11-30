@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { api, postJson } from "../../utils/api";
 
 export interface PatientFormValues {
   nome: string;
@@ -53,20 +54,16 @@ export default function PatientForm({
 
     try {
       const method = mode === "edit" ? "PATCH" : "POST";
-      const url =
-        mode === "edit"
-          ? `${API_BASE}/pacientes/${(defaultValues as { id?: string })?.id}`
-          : `${API_BASE}/pacientes`;
+      const path = mode === "edit" ? `/pacientes/${(defaultValues as { id?: string })?.id}` : "/pacientes";
 
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-
-      if (!res.ok) {
-        const err = await res.text();
-        throw new Error(err || "Erro ao salvar paciente");
+      if (method === "POST") {
+        await postJson(path, form);
+      } else {
+        const res = await api(path, { method, body: JSON.stringify(form) });
+        if (!res.ok) {
+          const err = await res.text();
+          throw new Error(err || "Erro ao salvar paciente");
+        }
       }
 
       alert(

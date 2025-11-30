@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { getJson } from "../../utils/api";
 
 type IdLike = string | number;
 
@@ -34,16 +35,7 @@ export default function Page() {
       try {
         setLoading(true);
         setError("");
-        const res = await fetch(`${API_BASE}/medicos`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-          cache: "no-store",
-        });
-        if (!res.ok) {
-          const txt = await res.text();
-          throw new Error(txt || `Falha ao carregar (HTTP ${res.status})`);
-        }
-        const data: Medico[] = await res.json();
+        const data = await getJson<Medico[]>("/medicos");
         setMedicos(Array.isArray(data) ? data : []);
       } catch (e: unknown) {
         console.error("Erro ao carregar médicos:", e);

@@ -1,12 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-
-/* -------- Helpers -------- */
-const API_BASE =
-  (process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") as string) || "";
-const apiUrl = (path: string) =>
-  `${API_BASE ? API_BASE : ""}${API_BASE ? "" : "/api"}${path}`;
+import { getJson, postJson, api } from "../../utils/api";
 
 /* -------- Tipos -------- */
 type Paciente = {
@@ -66,19 +61,7 @@ export default function AdminPage() {
         setLoading(true);
         setErr("");
 
-        const token = localStorage.getItem("token");
-
-        const res = await fetch(apiUrl("/leitos"), {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          cache: "no-store",
-        });
-
-        if (!res.ok) throw new Error(await res.text());
-
-        const data = (await res.json()) as Leito[];
+        const data = await getJson<Leito[]>("/leitos");
 
         // 🔥 CORREÇÃO FUNDAMENTAL:
         // status real depende de ter internação ativa
@@ -123,22 +106,10 @@ export default function AdminPage() {
     try {
       setSaving(true);
 
-      const token = localStorage.getItem("token");
-
-      const res = await fetch(apiUrl("/leitos"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          codigo: codigo.trim(),
-          status: "livre",
-        }),
+      const novo = await postJson<Leito>("/leitos", {
+        codigo: codigo.trim(),
+        status: "livre",
       });
-
-      if (!res.ok) throw new Error(await res.text());
-      const novo = (await res.json()) as Leito;
 
       setLeitos((prev) => [
         { ...novo, status: "livre", internacoes: [] },
@@ -155,16 +126,11 @@ export default function AdminPage() {
 
   /* -------- Alternar manutenção -------- */
   async function toggleManutencao(leito: Leito) {
-    const token = localStorage.getItem("token");
     const entrandoEmManutencao = leito.status !== "manutencao";
 
     try {
-      const res = await fetch(apiUrl(`/leitos/${leito.id}`), {
+      const res = await api(`/leitos/${leito.id}`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({
           status: entrandoEmManutencao ? "manutencao" : "livre",
         }),
@@ -201,12 +167,7 @@ export default function AdminPage() {
     if (!confirm(`Remover o leito ${leito.codigo}?`)) return;
 
     try {
-      const token = localStorage.getItem("token");
-
-      const res = await fetch(apiUrl(`/leitos/${leito.id}`), {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api(`/leitos/${leito.id}`, { method: "DELETE" });
 
       if (!res.ok) throw new Error(await res.text());
 

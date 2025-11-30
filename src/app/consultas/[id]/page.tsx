@@ -2,12 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { getJson, api } from "@/utils/api";
 
 type Id = number | string;
 interface Option { id: Id; nome: string; }
 interface Consulta {
   id: Id;
-  dataHora: string;     // ISO
+  dataHora: string;   
   motivo?: string | null;
   notas?: string | null;
   medicoId: Id;
@@ -18,14 +19,13 @@ const API_BASE =
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ||
   "http://localhost:4000/api/v1";
 
-// ISO -> "YYYY-MM-DDTHH:mm" (para input datetime-local)
 function isoToLocalInput(iso: string) {
   if (!iso) return "";
   const d = new Date(iso);
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
-// "YYYY-MM-DDTHH:mm" (local) -> ISO
+
 function localInputToIso(local: string) {
   return new Date(local).toISOString();
 }
@@ -49,17 +49,12 @@ export default function Page() {
     (async () => {
       try {
         setLoading(true);
-        const [cRes, pRes, mRes] = await Promise.all([
-          fetch(`${API_BASE}/consultas/${id}`, { cache: "no-store" }),
-          fetch(`${API_BASE}/pacientes`, { cache: "no-store" }),
-          fetch(`${API_BASE}/medicos`, { cache: "no-store" }),
+        const [c, p, m] = await Promise.all([
+          getJson<Consulta>(`/consultas/${id}`),
+          getJson<Option[]>("/pacientes"),
+          getJson<Option[]>("/medicos"),
         ]);
-        if (!cRes.ok) throw new Error("Falha ao carregar consulta");
-        const c = await cRes.json();
         setConsulta(c);
-
-        const p = await pRes.json();
-        const m = await mRes.json();
         setPacientes((Array.isArray(p) ? p : []).map((x: unknown) => {
           const item = x as { id: Id; nome: string };
           return { id: item.id, nome: item.nome };
@@ -88,9 +83,8 @@ export default function Page() {
     if (!consulta || !id) return;
     setSaving(true);
     try {
-      const res = await fetch(`${API_BASE}/consultas/${id}`, {
+      const res = await api(`/consultas/${id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           dataHora: consulta.dataHora, // já está em ISO
           motivo: consulta.motivo ?? undefined,
@@ -113,7 +107,7 @@ export default function Page() {
   const handleDelete = async () => {
     if (!id) return;
     if (!confirm("Deseja realmente excluir esta consulta?")) return;
-    const res = await fetch(`${API_BASE}/consultas/${id}`, { method: "DELETE" });
+    const res = await api(`/consultas/${id}`, { method: "DELETE" });
     if (!res.ok) return alert("Falha ao excluir");
     alert("Consulta excluída!");
     router.push("/consultas");

@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { getJson } from "../../utils/api";
 
 type Id = number | string;
 interface Consulta {
   id: Id;
-  dataHora: string;           // ISO do backend
+  dataHora: string;   
   motivo?: string | null;
   medico?: { id: Id; nome: string } | null;
   paciente?: { id: Id; nome: string } | null;
@@ -26,8 +27,8 @@ export default function Page() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch(`${API_BASE}/consultas`, { cache: "no-store" });
-        setItems((await res.json()) ?? []);
+        const data = await getJson<Consulta[]>("/consultas");
+        setItems(data ?? []);
       } finally {
         setLoading(false);
       }

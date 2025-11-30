@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { api, getJson, postJson } from "../../utils/api";
 
 type IdLike = number | string;
 
@@ -60,31 +61,10 @@ export default function DoctorForm({
       try {
         setLoadingEsp(true);
         setError("");
-        // include auth if available (token in localStorage) and allow cookies
+        // headers (no authentication required)
         const headers: Record<string, string> = { "Content-Type": "application/json" };
-        try {
-          const tok = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-          if (tok) headers["Authorization"] = `Bearer ${tok}`;
-        } catch {
-          // ignore localStorage errors
-        }
 
-        const res = await fetch(`${API_BASE}/especialidades`, {
-          headers,
-          cache: "no-store",
-          credentials: "include",
-        });
-        if (!res.ok) {
-          if (res.status === 401) {
-            // Not authorized - redirect to login so user can re-authenticate
-            // (keep a helpful message)
-            router.push("/login");
-            return;
-          }
-          const txt = await res.text();
-          throw new Error(txt || "Falha ao carregar especialidades");
-        }
-        const data: Especialidade[] = await res.json();
+        const data = await getJson<Especialidade[]>("/especialidades");
         setEspecialidades(data);
       } catch (err: unknown) {
         console.error(err);
@@ -124,31 +104,22 @@ export default function DoctorForm({
     setSaving(true);
     try {
       if (mode === "create") {
-        const res = await fetch(`${API_BASE}/medicos`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            nome: form.nome,
-            crm: form.crm || undefined,
-            telefone: form.telefone || undefined,
-            email: form.email || undefined,
-            especialidadeIds: (form.especialidadeIds ?? []).map((v) =>
-              typeof v === "string" ? Number(v) : v
-            ),
-          }),
+        await postJson("/medicos", {
+          nome: form.nome,
+          crm: form.crm || undefined,
+          telefone: form.telefone || undefined,
+          email: form.email || undefined,
+          especialidadeIds: (form.especialidadeIds ?? []).map((v) =>
+            typeof v === "string" ? Number(v) : v
+          ),
         });
-        if (!res.ok) {
-          const txt = await res.text();
-          throw new Error(txt || "Falha ao cadastrar médico");
-        }
         alert("Médico cadastrado com sucesso!");
       } else {
         if (!defaultValues.id) {
           throw new Error("ID do médico não informado para edição.");
         }
-        const res = await fetch(`${API_BASE}/medicos/${defaultValues.id}`, {
+        const res = await api(`/medicos/${defaultValues.id}`, {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             nome: form.nome,
             crm: form.crm || undefined,

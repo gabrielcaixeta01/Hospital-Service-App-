@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
+import { getJson, api } from "../../utils/api";
 import DoctorForm from "@/components/forms/DoctorForm";
 
 type IdLike = string | number;
@@ -41,12 +42,7 @@ export default function Page() {
       try {
         setLoading(true);
         setError("");
-        const res = await fetch(`${API_BASE}/medicos/${id}`, {
-          headers: { "Content-Type": "application/json" },
-          cache: "no-store",
-        });
-        if (!res.ok) throw new Error("Falha ao carregar médico");
-        const med: MedicoAPI = await res.json();
+        const med = await getJson<MedicoAPI>(`/medicos/${id}`);
         setMedico(med);
 
       } catch (e: unknown) {
@@ -66,7 +62,7 @@ export default function Page() {
     if (!id) return;
     if (!confirm("Deseja realmente excluir este médico?")) return;
     try {
-      const res = await fetch(`${API_BASE}/medicos/${id}`, { method: "DELETE" });
+      const res = await api(`/medicos/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Falha ao excluir");
       alert("Médico excluído com sucesso!");
       router.push("/medicos");

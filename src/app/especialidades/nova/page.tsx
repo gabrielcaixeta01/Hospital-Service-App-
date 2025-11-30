@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { postJson } from "@/utils/api";
 
 export default function NovoEspecialidadePage() {
   const router = useRouter();
@@ -17,27 +18,7 @@ export default function NovoEspecialidadePage() {
     setSaving(true);
 
     try {
-      const token = localStorage.getItem("token");
-
-      // 🔥 Se não houver token → usuário não está logado
-      if (!token) {
-        router.push("/login");
-        return;
-      }
-
-      const res = await fetch(`${API_BASE}/especialidades`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // ✔ token incluído
-        },
-        body: JSON.stringify({ nome }),
-      });
-
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(txt || "Falha ao criar especialidade");
-      }
+      await postJson("/especialidades", { nome });
 
       alert("Especialidade criada com sucesso!");
       router.push("/especialidades");

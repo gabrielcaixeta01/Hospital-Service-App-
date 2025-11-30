@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
+import { getJson, api } from "../../utils/api";
 
 type IdLike = string | number;
 
@@ -44,13 +45,7 @@ export default function Page() {
 
     const fetchPaciente = async () => {
       try {
-        const res = await fetch(`${API_BASE}/pacientes/${id}`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-          cache: "no-store",
-        });
-        if (!res.ok) throw new Error("not found");
-        const data = await res.json();
+        const data = await getJson<Paciente>(`/pacientes/${id}`);
 
         const rawDate = data.nascimento ?? "";
         setPaciente({
@@ -90,9 +85,8 @@ export default function Page() {
     if (!paciente) return;
     setSaving(true);
     try {
-      const res = await fetch(`${API_BASE}/pacientes/${params.id}`, {
+      const res = await api(`/pacientes/${params.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           nome: paciente.nome,
           cpf: paciente.cpf,
@@ -118,9 +112,7 @@ export default function Page() {
   const handleDelete = async () => {
     if (!confirm("Deseja realmente excluir este paciente?")) return;
     try {
-      const res = await fetch(`${API_BASE}/pacientes/${params.id}`, {
-        method: "DELETE",
-      });
+      const res = await api(`/pacientes/${params.id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Falha ao excluir");
       alert("Paciente excluído com sucesso!");
       router.push("/pacientes");

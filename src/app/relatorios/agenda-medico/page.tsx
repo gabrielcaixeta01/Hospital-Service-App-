@@ -1,15 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-
-/* ------------ Helpers ------------ */
-const API_BASE =
-  (process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") as string) || ""; // se vazio, usa /api
-const api = (path: string) =>
-  fetch(`${API_BASE ? API_BASE : ""}${API_BASE ? "" : "/api"}${path}`, {
-    headers: { "Content-Type": "application/json" },
-    cache: "no-store",
-  });
+import { api } from "../../../utils/api";
 
 /* ------------ Tipos mínimos (compatíveis com seu backend) ------------ */
 type NomeRef = { id: number; nome: string };

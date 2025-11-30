@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { getJson } from "../../utils/api";
 
 type IdLike = string | number;
 
@@ -18,10 +19,9 @@ interface PacienteAPI {
   id: IdLike;
   nome: string;
   cpf?: string | null;
-  nascimento?: string | null; // <- vem assim do back
+  nascimento?: string | null;
   telefone?: string | null;
   email?: string | null;
-  // ...outros campos do Prisma
 }
 
 const API_BASE =
@@ -49,19 +49,7 @@ export default function Page() {
         setLoading(true);
         setError("");
 
-        // Se tiver auth, acrescente o header Authorization aqui.
-        const res = await fetch(`${API_BASE}/pacientes`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-          cache: "no-store",
-        });
-
-        if (!res.ok) {
-          const txt = await res.text();
-          throw new Error(txt || `Falha ao carregar (HTTP ${res.status})`);
-        }
-
-        const data: PacienteAPI[] = await res.json();
+        const data = await getJson<PacienteAPI[]>("/pacientes");
 
         const mapped: PacienteUI[] = (data ?? []).map((p) => ({
           id: p.id,

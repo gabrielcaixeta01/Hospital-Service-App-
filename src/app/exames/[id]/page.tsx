@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { api } from "../../../utils/api";
 
 type Pessoa = { id: number; nome: string };
 type ConsultaLite = {
@@ -21,15 +22,7 @@ type Exame = {
   consulta?: ConsultaLite | null;
 };
 
-const API_BASE =
-  (process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") as string) || "";
-
-const api = (path: string, init?: RequestInit) =>
-  fetch(`${API_BASE ? API_BASE : ""}${API_BASE ? "" : "/api"}${path}`, {
-    headers: { "Content-Type": "application/json" },
-    cache: "no-store",
-    ...init,
-  });
+// uses centralized `api` helper from `src/utils/api`
 
 function toDatetimeLocal(iso?: string | null) {
   if (!iso) return "";

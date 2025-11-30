@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { getJson, postJson } from "../../utils/api";
 
 interface Paciente { id: number; nome: string }
 interface Leito { id: number; codigo: string }
@@ -44,14 +45,12 @@ export default function NovaInternacaoPage() {
     const load = async () => {
       try {
         setLoading(true);
-        const [pRes, lRes] = await Promise.all([
-          fetch(`${API_BASE}/pacientes`, { cache: "no-store" }),
-          fetch(`${API_BASE}/leitos`, { cache: "no-store" }),
+        const [pData, lData] = await Promise.all([
+          getJson<Paciente[]>("/pacientes"),
+          getJson<Leito[]>("/leitos"),
         ]);
-        if (!pRes.ok) throw new Error("Falha ao carregar pacientes");
-        if (!lRes.ok) throw new Error("Falha ao carregar leitos");
-        setPacientes(await pRes.json());
-        setLeitos(await lRes.json());
+        setPacientes(pData);
+        setLeitos(lData);
       } catch (e: unknown) {
         setError((e as Error)?.message || "Erro ao carregar dados");
       } finally {
@@ -69,18 +68,12 @@ export default function NovaInternacaoPage() {
     }
     setSaving(true);
     try {
-      const res = await fetch(`${API_BASE}/internacoes`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          pacienteId: Number(pacienteId),
-          leitoId: Number(leitoId),
-          dataEntrada: fromDatetimeLocal(dataEntradaLocal),
-          dataAlta: dataAltaLocal ? fromDatetimeLocal(dataAltaLocal) : null,
-        }),
+      const created = await postJson("/internacoes", {
+        pacienteId: Number(pacienteId),
+        leitoId: Number(leitoId),
+        dataEntrada: fromDatetimeLocal(dataEntradaLocal),
+        dataAlta: dataAltaLocal ? fromDatetimeLocal(dataAltaLocal) : null,
       });
-      if (!res.ok) throw new Error(await res.text());
-      const created = await res.json();
       alert("Internação criada com sucesso!");
       router.push(`/internacoes/${created.id}`);
     } catch (e) {

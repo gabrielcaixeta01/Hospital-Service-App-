@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { getJson } from "../../utils/api";
 
 /** ---- Tipos vindos da API ---- */
 interface InternacaoAPI {
@@ -35,12 +36,7 @@ export default function InternacoesList() {
   useEffect(() => {
     const fetchInternacoes = async () => {
       try {
-        const res = await fetch(`${API_BASE}/internacoes`, {
-          headers: { "Content-Type": "application/json" },
-          cache: "no-store",
-        });
-        if (!res.ok) throw new Error("Falha ao carregar internações");
-        const data: InternacaoAPI[] = await res.json();
+        const data = await getJson<InternacaoAPI[]>("/internacoes");
 
         const mapped: InternacaoVM[] = data.map((i) => ({
           id: i.id,

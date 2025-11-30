@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { getJson, api } from "../../utils/api";
 
 type IdLike = number | string;
 
@@ -26,32 +27,7 @@ export default function Page() {
         setLoading(true);
         setError("");
 
-        // 🔥 1. Recupera token
-        const token = localStorage.getItem("token");
-
-        // 🔥 2. Se NÃO houver token → enviou Bearer null → backend rejeita
-        if (!token) {
-          console.warn("Sem token, redirecionando para login...");
-          router.push("/login");
-          return;
-        }
-
-        // 🔥 3. Agora sim faz o fetch autenticado
-        const res = await fetch(`${API_BASE}/especialidades`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          cache: "no-store",
-        });
-
-        if (!res.ok) {
-          const txt = await res.text();
-          throw new Error(txt || `Falha ao carregar (HTTP ${res.status})`);
-        }
-
-        const data: Especialidade[] = await res.json();
+        const data = await getJson<Especialidade[]>("/especialidades");
         setEspecialidades(Array.isArray(data) ? data : []);
       } catch (e: unknown) {
         console.error("Erro ao carregar especialidades:", e);
@@ -71,21 +47,7 @@ export default function Page() {
     if (!confirm("Deseja realmente remover essa especialidade?")) return;
 
     try {
-      const token = localStorage.getItem("token");
-
-      if (!token) {
-        router.push("/login");
-        return;
-      }
-
-      const res = await fetch(`${API_BASE}/especialidades/${id}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
+      const res = await api(`/especialidades/${id}`, { method: "DELETE" });
       if (!res.ok) {
         const txt = await res.text();
         throw new Error(txt || `Falha ao remover (HTTP ${res.status})`);

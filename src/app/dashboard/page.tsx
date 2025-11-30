@@ -3,24 +3,14 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
-/* ---------- Helpers ---------- */
-const API_BASE =
-  (process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") as string) || "";
+import { api } from "../../utils/api";
 
-const api = (path: string) =>
-  fetch(`${API_BASE ? API_BASE : ""}${API_BASE ? "" : "/api"}${path}`, {
-    headers: { "Content-Type": "application/json" },
-    cache: "no-store",
-  });
-
-/* ---------- Tipos ---------- */
 type Paciente = { id: number };
 type Consulta = { id: number; dataHora?: string | null; data?: string | null };
 type Internacao = { id: number; dataAlta?: string | null };
 type Exame = { id: number; resultado?: string | null };
 
 
-/* ---------- Card ---------- */
 const Card = ({
   title,
   desc,

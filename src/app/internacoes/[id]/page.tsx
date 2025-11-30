@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { getJson, api } from "@/utils/api";
 
 /** ---- Tipos vindos da API ---- */
 interface Paciente { id: number; nome: string }
@@ -60,15 +61,10 @@ export default function Page() {
         setLoading(true);
         setError("");
 
-        const [iRes, lRes] = await Promise.all([
-          fetch(`${API_BASE}/internacoes/${id}`, { cache: "no-store" }),
-          fetch(`${API_BASE}/leitos`, { cache: "no-store" }),
+        const [iData, lData] = await Promise.all([
+          getJson<InternacaoAPI>(`/internacoes/${id}`),
+          getJson<Leito[]>("/leitos"),
         ]);
-        if (!iRes.ok) throw new Error("Falha ao carregar internação");
-        if (!lRes.ok) throw new Error("Falha ao carregar leitos");
-
-        const iData: InternacaoAPI = await iRes.json();
-        const lData: Leito[] = await lRes.json();
         setData(iData);
         setLeitos(lData);
       } catch (e: unknown) {
@@ -85,9 +81,8 @@ export default function Page() {
     if (!id || !data) return;
     setSaving(true);
     try {
-      const res = await fetch(`${API_BASE}/internacoes/${id}`, {
+      const res = await api(`/internacoes/${id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           leitoId: data.leitoId,
           dataEntrada: data.dataEntrada,
@@ -111,9 +106,7 @@ export default function Page() {
     if (!id) return;
     if (!confirm("Deseja realmente excluir esta internação?")) return;
     try {
-      const res = await fetch(`${API_BASE}/internacoes/${id}`, {
-        method: "DELETE",
-      });
+      const res = await api(`/internacoes/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error(await res.text());
       alert("Internação excluída!");
       router.push("/internacoes");
