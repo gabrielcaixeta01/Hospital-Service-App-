@@ -22,9 +22,6 @@ interface InternacaoVM {
   status: Status;
 }
 
-const API_BASE =
-  (process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") as string) ||
-  "http://localhost:4000/api/v1";
 
 export default function InternacoesList() {
   const router = useRouter();

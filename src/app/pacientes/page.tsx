@@ -24,9 +24,6 @@ interface PacienteAPI {
   email?: string | null;
 }
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ||
-  "http://localhost:4000/api/v1";
 
 function dateOnlyToBR(iso: string | null | undefined) {
   if (!iso) return undefined;

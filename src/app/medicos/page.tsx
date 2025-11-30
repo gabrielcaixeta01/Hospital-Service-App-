@@ -26,10 +26,6 @@ export default function Page() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const API_BASE =
-    process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ||
-    "http://localhost:4000/api/v1";
-
   useEffect(() => {
     const fetchMedicos = async () => {
       try {
@@ -46,7 +42,7 @@ export default function Page() {
       }
     };
     fetchMedicos();
-  }, [API_BASE]);
+  }, []);
 
   const hasData = useMemo(() => medicos.length > 0, [medicos]);
 

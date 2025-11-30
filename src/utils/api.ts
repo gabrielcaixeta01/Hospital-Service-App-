@@ -1,12 +1,10 @@
-// Remove barras duplicadas do final da URL base
-const API_BASE = process.env.NEXT_PUBLIC_API_URL
-  ? process.env.NEXT_PUBLIC_API_URL.replace(/\/+$/, "")
-  : "";
+// src/utils/api.ts
 
-// Garante que sempre tenha UMA barra antes do path
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/+$/, "");
+
 export const apiUrl = (path: string) => {
-  const clean = path.startsWith("/") ? path : `/${path}`;
-  return `${API_BASE}${clean}`;
+  if (!path.startsWith("/")) path = "/" + path;
+  return `${API_BASE}${path}`;
 };
 
 type HeadersRecord = Record<string, string>;
@@ -27,13 +25,18 @@ function normalizeHeaders(h?: HeadersInit): HeadersRecord {
 }
 
 export async function api(path: string, init?: RequestInit) {
+  console.log("API_BASE =", API_BASE);
+  console.log("Chamando:", apiUrl(path));
   const provided = normalizeHeaders(init?.headers);
   const headers: HeadersRecord = {
     "Content-Type": "application/json",
     ...provided,
   };
 
-  const res = await fetch(apiUrl(path), { ...init, headers });
+  const url = apiUrl(path);
+  console.log("[API FETCH]", url);
+
+  const res = await fetch(url, { ...init, headers });
   return res;
 }
 
@@ -43,47 +46,30 @@ export async function getJson<T = any>(path: string, init?: RequestInit): Promis
     const txt = await res.text();
     throw new Error(txt || `HTTP ${res.status}`);
   }
-  return await res.json();
+  return res.json() as Promise<T>;
 }
 
-export async function postJson<T = any>(
-  path: string,
-  body?: any,
-  init?: RequestInit
-): Promise<T> {
+export async function postJson<T = any>(path: string, body?: any, init?: RequestInit): Promise<T> {
   const res = await api(path, {
     method: "POST",
     body: JSON.stringify(body),
     ...init,
   });
-  if (!res.ok) {
-    const txt = await res.text();
-    throw new Error(txt || `HTTP ${res.status}`);
-  }
-  return await res.json();
+  if (!res.ok) throw new Error(await res.text());
+  return res.json() as Promise<T>;
 }
 
-export async function patchJson<T = any>(
-  path: string,
-  body?: any,
-  init?: RequestInit
-): Promise<T> {
+export async function patchJson<T = any>(path: string, body?: any, init?: RequestInit): Promise<T> {
   const res = await api(path, {
     method: "PATCH",
     body: JSON.stringify(body),
     ...init,
   });
-  if (!res.ok) {
-    const txt = await res.text();
-    throw new Error(txt || `HTTP ${res.status}`);
-  }
-  return await res.json();
+  if (!res.ok) throw new Error(await res.text());
+  return res.json() as Promise<T>;
 }
 
-export async function deleteJson(path: string, init?: RequestInit) {
+export async function deleteJson(path: string, init?: RequestInit): Promise<void> {
   const res = await api(path, { method: "DELETE", ...init });
-  if (!res.ok) {
-    const txt = await res.text();
-    throw new Error(txt || `HTTP ${res.status}`);
-  }
+  if (!res.ok) throw new Error(await res.text());
 }

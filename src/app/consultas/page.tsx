@@ -14,11 +14,6 @@ interface Consulta {
   medicoId?: Id;
   pacienteId?: Id;
 }
-
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ||
-  "http://localhost:4000/api/v1";
-
 export default function Page() {
   const router = useRouter();
   const [items, setItems] = useState<Consulta[]>([]);
