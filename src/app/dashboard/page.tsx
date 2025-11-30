@@ -198,6 +198,11 @@ export default function DashboardPage() {
           actions={[{ label: "Novo", href: "/exames/novo" }]}
         />
         <Card
+          title="Leitos"
+          desc="Leitos cadastrados no sistema."
+          href="/leitos"
+        />
+        <Card
           title="Relatórios"
           desc="Dashboards de ocupação e produtividade."
           href="/relatorios"

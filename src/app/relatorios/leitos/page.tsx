@@ -87,7 +87,7 @@ export default function RelatorioLeitos() {
   }
 
   return (
-    <section className="max-w-6xl mx-auto px-6 py-8">
+    <section className="max-w-6xl mx-auto px-6 py-40">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-blue-700">Ocupação de Leitos</h1>

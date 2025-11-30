@@ -82,7 +82,7 @@ export default function RelatoriosIndex() {
   }, []);
 
   return (
-    <section className="max-w-6xl mx-auto px-6 py-8">
+    <section className="max-w-6xl mx-auto px-6 py-20">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold text-blue-700">Relatórios</h1>
