@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { getJson, api } from "@/utils/api";
+import { getJson, api, deleteJson } from "@/utils/api";
 
 type Id = number | string;
 interface Option { id: Id; nome: string; }
@@ -107,8 +107,7 @@ export default function Page() {
   const handleDelete = async () => {
     if (!id) return;
     if (!confirm("Deseja realmente excluir esta consulta?")) return;
-    const res = await api(`/consultas/${id}`, { method: "DELETE" });
-    if (!res.ok) return alert("Falha ao excluir");
+    await deleteJson(`/consultas/${id}`);
     alert("Consulta excluída!");
     router.push("/consultas");
   };

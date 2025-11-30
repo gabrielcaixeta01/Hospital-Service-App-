@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
-import { api } from "../../utils/api";
+import { api } from "@/utils/api";
 
 type Paciente = { id: number };
 type Consulta = { id: number; dataHora?: string | null; data?: string | null };

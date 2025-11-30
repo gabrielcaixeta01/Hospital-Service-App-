@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getJson, postJson } from "../../utils/api";
+import { getJson, postJson } from "../../../utils/api";
 
 interface Paciente { id: number; nome: string }
 interface Leito { id: number; codigo: string }

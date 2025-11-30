@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { api } from "../../../utils/api";
+import { api, deleteJson } from "../../../utils/api";
 
 type Pessoa = { id: number; nome: string };
 type ConsultaLite = {
@@ -117,8 +117,7 @@ export default function ExameDetailPage() {
     if (!id) return;
     if (!confirm("Deseja realmente excluir este exame?")) return;
     try {
-      const res = await api(`/exames/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error(await res.text());
+      await deleteJson(`/exames/${id}`);
       alert("Exame excluído!");
       router.push("/exames");
     } catch (e) {

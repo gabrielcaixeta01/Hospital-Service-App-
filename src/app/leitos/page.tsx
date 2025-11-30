@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { getJson, postJson, api } from "../../utils/api";
+import { getJson, postJson, api, deleteJson } from "../../utils/api";
 
-/* -------- Tipos -------- */
 type Paciente = {
   id: number;
   nome: string;
@@ -19,17 +18,15 @@ type Internacao = {
 type Leito = {
   id: number;
   codigo: string;
-  status: string;  // backend devolve string
+  status: string;
   internacoes?: Internacao[];
 };
 
-/* ---- Tipagem para Th/Td ---- */
 interface CellProps {
   children: React.ReactNode;
   align?: "left" | "right" | "center";
 }
 
-/* ---- Switch estilizado (coluna fixa, sem tremer) ---- */
 function Switch({ checked, onChange, disabled }: { checked: boolean; onChange: () => void; disabled?: boolean }) {
   return (
     <button
@@ -54,7 +51,6 @@ export default function AdminPage() {
   const [codigo, setCodigo] = useState("");
   const [saving, setSaving] = useState(false);
 
-  /* -------- Buscar leitos -------- */
   useEffect(() => {
     const run = async () => {
       try {
@@ -63,8 +59,6 @@ export default function AdminPage() {
 
         const data = await getJson<Leito[]>("/leitos");
 
-        // 🔥 CORREÇÃO FUNDAMENTAL:
-        // status real depende de ter internação ativa
         const ajustado = data.map((l) => {
           const ativa = l.internacoes && l.internacoes.some((i) => i.dataAlta === null);
           return {
@@ -85,7 +79,6 @@ export default function AdminPage() {
     run();
   }, []);
 
-  /* -------- KPIs (usam status real) -------- */
   const kpis = useMemo(() => {
     const acc = { total: leitos.length, livre: 0, ocupado: 0, manutencao: 0 };
     for (const l of leitos) {
@@ -95,7 +88,6 @@ export default function AdminPage() {
     return acc;
   }, [leitos]);
 
-  /* -------- Criar leito -------- */
   async function criarLeito(e: React.FormEvent) {
     e.preventDefault();
     if (!codigo.trim()) {
@@ -124,7 +116,6 @@ export default function AdminPage() {
     }
   }
 
-  /* -------- Alternar manutenção -------- */
   async function toggleManutencao(leito: Leito) {
     const entrandoEmManutencao = leito.status !== "manutencao";
 
@@ -138,11 +129,8 @@ export default function AdminPage() {
 
       if (!res.ok) throw new Error(await res.text());
 
-      // Backend devolve o leito atualizado, MAS vamos recalcular o status correto
       const atualizado = (await res.json()) as Leito;
 
-      // 🔥 Recalcular status REAL com internações,
-      // do MESMO JEITO que o useEffect faz.
       const ativa =
         atualizado.internacoes &&
         atualizado.internacoes.some((i) => i.dataAlta === null);
@@ -162,14 +150,11 @@ export default function AdminPage() {
     }
   }
 
-  /* -------- Remover leito -------- */
   async function removerLeito(leito: Leito) {
     if (!confirm(`Remover o leito ${leito.codigo}?`)) return;
 
     try {
-      const res = await api(`/leitos/${leito.id}`, { method: "DELETE" });
-
-      if (!res.ok) throw new Error(await res.text());
+      await deleteJson(`/leitos/${leito.id}`);
 
       setLeitos((prev) => prev.filter((l) => l.id !== leito.id));
     } catch (e) {
@@ -178,7 +163,6 @@ export default function AdminPage() {
     }
   }
 
-  /* -------- Render -------- */
   return (
     <section className="max-w-6xl mx-auto px-6 py-8">
       <h1 className="text-3xl font-bold text-blue-700 mb-4">Gerencie os Leitos</h1>
@@ -301,7 +285,6 @@ export default function AdminPage() {
   );
 }
 
-/* ---- Components ---- */
 
 function KpiCard({ label, value }: { label: string; value: number }) {
   return (

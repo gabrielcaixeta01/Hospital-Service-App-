@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { getJson, api } from "../../utils/api";
+import { getJson, api, deleteJson } from "../../../utils/api";
 import DoctorForm from "@/components/forms/DoctorForm";
 
 type IdLike = string | number;
@@ -62,8 +62,7 @@ export default function Page() {
     if (!id) return;
     if (!confirm("Deseja realmente excluir este médico?")) return;
     try {
-      const res = await api(`/medicos/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Falha ao excluir");
+      await deleteJson(`/medicos/${id}`);
       alert("Médico excluído com sucesso!");
       router.push("/medicos");
     } catch (err) {

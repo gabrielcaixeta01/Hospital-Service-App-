@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { getJson, api } from "../../utils/api";
+import { getJson, api, deleteJson } from "../../../utils/api";
 
 type IdLike = string | number;
 
@@ -10,6 +10,7 @@ interface Paciente {
   id: IdLike;
   nome: string;
   dataNascimento?: string;
+  nascimento?: string;
   sexo?: string;
   telefone?: string;
   email?: string;
@@ -112,8 +113,7 @@ export default function Page() {
   const handleDelete = async () => {
     if (!confirm("Deseja realmente excluir este paciente?")) return;
     try {
-      const res = await api(`/pacientes/${params.id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Falha ao excluir");
+      await deleteJson(`/pacientes/${params.id}`);
       alert("Paciente excluído com sucesso!");
       router.push("/pacientes");
     } catch (err) {

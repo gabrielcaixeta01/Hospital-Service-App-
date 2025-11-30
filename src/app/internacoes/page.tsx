@@ -4,16 +4,14 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { getJson } from "../../utils/api";
 
-/** ---- Tipos vindos da API ---- */
 interface InternacaoAPI {
   id: number;
-  dataEntrada: string;           // ISO
-  dataAlta?: string | null;      // ISO ou null
+  dataEntrada: string;           
+  dataAlta?: string | null;     
   paciente: { id: number; nome: string };
   leito: { id: number; codigo: string };
 }
 
-/** ---- Tipos para a UI (com campos derivados) ---- */
 type Status = "ATIVO" | "ALTA";
 
 interface InternacaoVM {

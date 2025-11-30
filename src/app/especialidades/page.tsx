@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getJson, api } from "../../utils/api";
+import { getJson, api, deleteJson } from "../../utils/api";
 
 type IdLike = number | string;
 
@@ -47,11 +47,7 @@ export default function Page() {
     if (!confirm("Deseja realmente remover essa especialidade?")) return;
 
     try {
-      const res = await api(`/especialidades/${id}`, { method: "DELETE" });
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(txt || `Falha ao remover (HTTP ${res.status})`);
-      }
+      await deleteJson(`/especialidades/${id}`);
 
       setEspecialidades((prev) =>
         prev.filter((p) => String(p.id) !== String(id))

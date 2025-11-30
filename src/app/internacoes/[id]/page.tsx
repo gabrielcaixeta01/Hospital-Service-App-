@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { getJson, api } from "@/utils/api";
+import { getJson, api, deleteJson } from "@/utils/api";
 
 /** ---- Tipos vindos da API ---- */
 interface Paciente { id: number; nome: string }
@@ -106,8 +106,7 @@ export default function Page() {
     if (!id) return;
     if (!confirm("Deseja realmente excluir esta internação?")) return;
     try {
-      const res = await api(`/internacoes/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error(await res.text());
+      await deleteJson(`/internacoes/${id}`);
       alert("Internação excluída!");
       router.push("/internacoes");
     } catch (e) {

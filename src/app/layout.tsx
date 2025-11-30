@@ -8,8 +8,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR">
-      < Navbar />
-      <body className="bg-gray-50 text-gray-900">{children}</body>
+      <body className="bg-gray-50 text-gray-900">
+        <Navbar />
+        <main>{children}</main>
+      </body>
     </html>
   );
 }
