@@ -18,7 +18,7 @@ interface MedicoAPI {
   crm?: string | null;
   email?: string | null;
   telefone?: string | null;
-  especialidades?: Especialidade[];
+  especialidade?: Especialidade[];
 }
 
 export default function Page() {
@@ -123,7 +123,7 @@ export default function Page() {
               crm: medico.crm ?? "",
               telefone: medico.telefone ?? "",
               email: medico.email ?? "",
-              especialidades: medico.especialidades ?? [],
+              especialidade: medico.especialidade ?? [],
             }}
             onSuccess={() => router.push("/medicos")}
           />
@@ -138,8 +138,8 @@ export default function Page() {
               <Display
                 label="Especialidades"
                 value={
-                  (medico.especialidades ?? []).length
-                    ? (medico.especialidades ?? []).map((e) => e.nome).join(", ")
+                  (medico.especialidade ?? []).length
+                    ? (medico.especialidade ?? []).map((e) => e.nome).join(", ")
                     : "—"
                 }
                 full

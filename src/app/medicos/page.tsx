@@ -17,7 +17,7 @@ interface Medico {
   crm?: string | null;
   email?: string | null;
   telefone?: string | null;
-  especialidades?: Especialidade[]; // vindo do Prisma include
+  especialidade?: Especialidade[]; // vindo do Prisma include
 }
 
 export default function Page() {
@@ -93,7 +93,7 @@ export default function Page() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {medicos.map((m) => {
-                  const espec = (m.especialidades ?? []).map((e) => e.nome);
+                  const espec = (m.especialidade ?? []).map((e) => e.nome);
                   const especLabel = espec.length ? espec.join(", ") : "—";
                   return (
                     <tr key={String(m.id)} className="hover:bg-gray-50">

@@ -21,12 +21,11 @@ interface Especialidade {
 
 interface DoctorFormProps {
   mode?: "create" | "edit";
-  // Para o modo "edit", passe o id e os valores iniciais (incluindo especialidades atuais)
   defaultValues?: Partial<DoctorFormValues> & {
     id?: IdLike;
-    especialidades?: Especialidade[];
+    especialidade?: Especialidade[];
   };
-  onSuccess?: () => void; // callback opcional após sucesso
+  onSuccess?: () => void;
 }
 
 export default function DoctorForm({
@@ -40,28 +39,24 @@ export default function DoctorForm({
     process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ||
     "http://localhost:4000/api/v1";
 
-  // estado do formulário
   const [form, setForm] = useState<DoctorFormValues>({
     nome: defaultValues.nome || "",
     crm: defaultValues.crm || "",
     telefone: defaultValues.telefone || "",
     email: defaultValues.email || "",
-    especialidadeIds: (defaultValues.especialidades || []).map((e) => e.id),
+    especialidadeIds: (defaultValues.especialidade || []).map((e) => e.id),
   });
 
-  // catálogo de especialidades
   const [especialidades, setEspecialidades] = useState<Especialidade[]>([]);
   const [loadingEsp, setLoadingEsp] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  // carregar catálogo de especialidades
   useEffect(() => {
     const load = async () => {
       try {
         setLoadingEsp(true);
         setError("");
-        // headers (no authentication required)
         const headers: Record<string, string> = { "Content-Type": "application/json" };
 
         const data = await getJson<Especialidade[]>("/especialidades");
@@ -125,7 +120,6 @@ export default function DoctorForm({
             crm: form.crm || undefined,
             telefone: form.telefone || undefined,
             email: form.email || undefined,
-            // substitui completamente as relações
             replaceEspecialidadeIds: (form.especialidadeIds ?? []).map((v) =>
               typeof v === "string" ? Number(v) : v
             ),
