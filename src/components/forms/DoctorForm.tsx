@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { getJson, postJson, api, patchJson } from "../../utils/api";
+import { getJson, postJson, patchJson } from "../../utils/api";
 
 type IdLike = number | string;
 
@@ -27,7 +27,6 @@ interface DoctorFormProps {
     crm?: string | null;
     telefone?: string | null;
     email?: string | null;
-
     especialidades?: Especialidade[];
   };
   onSuccess?: () => void;
@@ -35,26 +34,27 @@ interface DoctorFormProps {
 
 export default function DoctorForm({
   mode = "create",
-  defaultValues = {},
+  defaultValues,
   onSuccess,
 }: DoctorFormProps) {
   const router = useRouter();
 
-  const [form, setForm] = useState<DoctorFormValues>({
-    nome: defaultValues.nome || "",
-    crm: defaultValues.crm || "",
-    telefone: defaultValues.telefone || "",
-    email: defaultValues.email || "",
-    especialidadesIds: (defaultValues.especialidades || []).map((e) =>
-      Number(e.id)
-    ),
-  });
+  // estado inicial só é calculado uma vez
+  const [form, setForm] = useState<DoctorFormValues>(() => ({
+    nome: defaultValues?.nome || "",
+    crm: defaultValues?.crm || "",
+    telefone: defaultValues?.telefone || "",
+    email: defaultValues?.email || "",
+    especialidadesIds:
+      defaultValues?.especialidades?.map((e) => Number(e.id)) || [],
+  }));
 
   const [especialidades, setEspecialidades] = useState<Especialidade[]>([]);
   const [loadingEsp, setLoadingEsp] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
+  // carrega especialidades uma vez
   useEffect(() => {
     const load = async () => {
       try {
@@ -72,17 +72,20 @@ export default function DoctorForm({
     load();
   }, []);
 
+  // quando for modo edição e chegarem defaultValues,
+  // sincroniza o form com esses valores
   useEffect(() => {
+    if (mode !== "edit" || !defaultValues) return;
+
     setForm({
       nome: defaultValues.nome || "",
       crm: defaultValues.crm || "",
       telefone: defaultValues.telefone || "",
       email: defaultValues.email || "",
-      especialidadesIds: (defaultValues.especialidades || []).map((e) =>
-        Number(e.id)
-      ),
+      especialidadesIds:
+        defaultValues.especialidades?.map((e) => Number(e.id)) || [],
     });
-  }, [defaultValues]);
+  }, [mode, defaultValues?.id]); // usa o id como dependência estável
 
   const hasEspecialidades = useMemo(
     () => especialidades.length > 0,
@@ -116,40 +119,23 @@ export default function DoctorForm({
         crm: form.crm || undefined,
         telefone: form.telefone || undefined,
         email: form.email || undefined,
-        especialidadesIds,
+        // o backend só liga para especialidadeIds / replaceEspecialidadeIds
+        especialidadeIds: especialidadesIds,
       };
 
-      if (especialidadesIds.length > 0) {
-        payload.especialidades = { connect: especialidadesIds.map((id) => ({ id })) };
-      }
-
-      // also send fields expected by the backend service (NestJS/Prisma)
-      // create expects `especialidadeIds` and update supports `replaceEspecialidadeIds`
-      if (especialidadesIds.length > 0) {
-        payload.especialidadeIds = especialidadesIds;
-      } else {
-        payload.especialidadeIds = [];
-      }
-
       if (mode === "create") {
-        // log create payload for easier debugging
         console.log("POST /medicos", payload);
         await postJson("/medicos", payload);
         alert("Médico criado com sucesso!");
       } else {
-        if (!defaultValues.id)
+        if (!defaultValues?.id) {
           throw new Error("ID do médico não informado para edição.");
+        }
 
-        // for update, instruct backend to replace the full relation by sending
-        // `replaceEspecialidadeIds` (what the service expects)
         payload.replaceEspecialidadeIds = especialidadesIds;
 
-        // log payload for easier debugging in browser/network
         console.log("PATCH /medicos/", defaultValues.id, payload);
-
-        // use helper to ensure headers/body handling and consistent errors
         await patchJson(`/medicos/${defaultValues.id}`, payload);
-
         alert("Médico atualizado com sucesso!");
       }
 
@@ -183,13 +169,43 @@ export default function DoctorForm({
       </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Input label="Nome" name="nome" value={form.nome} onChange={(e: { target: { value: any; }; }) => setForm({ ...form, nome: e.target.value })} required />
+        <Input
+          label="Nome"
+          name="nome"
+          value={form.nome}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setForm({ ...form, nome: e.target.value })
+          }
+          required
+        />
 
-        <Input label="CRM" name="crm" value={form.crm || ""} onChange={(e: { target: { value: any; }; }) => setForm({ ...form, crm: e.target.value })} />
+        <Input
+          label="CRM"
+          name="crm"
+          value={form.crm || ""}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setForm({ ...form, crm: e.target.value })
+          }
+        />
 
-        <Input label="Telefone" name="telefone" value={form.telefone || ""} onChange={(e: { target: { value: any; }; }) => setForm({ ...form, telefone: e.target.value })} />
+        <Input
+          label="Telefone"
+          name="telefone"
+          value={form.telefone || ""}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setForm({ ...form, telefone: e.target.value })
+          }
+        />
 
-        <Input label="Email" name="email" type="email" value={form.email || ""} onChange={(e: { target: { value: any; }; }) => setForm({ ...form, email: e.target.value })} />
+        <Input
+          label="Email"
+          name="email"
+          type="email"
+          value={form.email || ""}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setForm({ ...form, email: e.target.value })
+          }
+        />
       </div>
 
       <div className="mt-4">
