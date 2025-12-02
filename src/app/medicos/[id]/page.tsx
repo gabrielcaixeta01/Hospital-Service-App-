@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { getJson, deleteJson } from "../../../utils/api";
+import { getJson, deleteJson } from "@/utils/api";
 import DoctorForm from "@/components/forms/DoctorForm";
 
 type IdLike = string | number;
@@ -19,7 +19,6 @@ interface MedicoAPI {
   email?: string | null;
   telefone?: string | null;
 
-  // CORRETO → o back retorna "especialidades"
   especialidades?: Especialidade[];
 }
 

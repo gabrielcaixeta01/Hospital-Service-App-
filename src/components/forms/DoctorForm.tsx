@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { getJson, postJson, api } from "../../utils/api";
+import { getJson, postJson, api, patchJson } from "../../utils/api";
 
 type IdLike = number | string;
 
@@ -109,35 +109,57 @@ export default function DoctorForm({
     setSaving(true);
 
     try {
-      const payload = {
+      const especialidadesIds = (form.especialidadesIds || []).map(Number);
+
+      const payload: any = {
         nome: form.nome,
         crm: form.crm || undefined,
         telefone: form.telefone || undefined,
         email: form.email || undefined,
-        especialidadesIds: (form.especialidadesIds || []).map(Number),
+        especialidadesIds,
       };
 
+      if (especialidadesIds.length > 0) {
+        payload.especialidades = { connect: especialidadesIds.map((id) => ({ id })) };
+      }
+
+      // also send fields expected by the backend service (NestJS/Prisma)
+      // create expects `especialidadeIds` and update supports `replaceEspecialidadeIds`
+      if (especialidadesIds.length > 0) {
+        payload.especialidadeIds = especialidadesIds;
+      } else {
+        payload.especialidadeIds = [];
+      }
+
       if (mode === "create") {
+        // log create payload for easier debugging
+        console.log("POST /medicos", payload);
         await postJson("/medicos", payload);
         alert("Médico criado com sucesso!");
       } else {
         if (!defaultValues.id)
           throw new Error("ID do médico não informado para edição.");
 
-        const res = await api(`/medicos/${defaultValues.id}`, {
-          method: "PATCH",
-          body: JSON.stringify(payload),
-        });
+        // for update, instruct backend to replace the full relation by sending
+        // `replaceEspecialidadeIds` (what the service expects)
+        payload.replaceEspecialidadeIds = especialidadesIds;
 
-        if (!res.ok) {
-          const txt = await res.text();
-          throw new Error(txt || "Erro ao atualizar médico");
-        }
+        // log payload for easier debugging in browser/network
+        console.log("PATCH /medicos/", defaultValues.id, payload);
+
+        // use helper to ensure headers/body handling and consistent errors
+        await patchJson(`/medicos/${defaultValues.id}`, payload);
 
         alert("Médico atualizado com sucesso!");
       }
 
-      onSuccess ? onSuccess() : router.replace("/medicos"); router.refresh?.();
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        router.replace("/medicos");
+      }
+
+      router.refresh?.();
     } catch (err: unknown) {
       console.error(err);
       alert((err as Error)?.message || "Erro ao salvar médico");

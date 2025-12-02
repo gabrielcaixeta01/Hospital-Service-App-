@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getJson } from "../../utils/api";
+import { getJson } from "@/utils/api";
 
 type IdLike = string | number;
 
@@ -18,7 +18,6 @@ interface Medico {
   email?: string | null;
   telefone?: string | null;
 
-  // NOME CORRETO AQUI ↓↓↓↓↓↓↓↓↓↓
   especialidades?: Especialidade[];
 }
 
