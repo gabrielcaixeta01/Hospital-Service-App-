@@ -17,7 +17,9 @@ interface Medico {
   crm?: string | null;
   email?: string | null;
   telefone?: string | null;
-  especialidade?: Especialidade[]; // vindo do Prisma include
+
+  // NOME CORRETO AQUI ↓↓↓↓↓↓↓↓↓↓
+  especialidades?: Especialidade[];
 }
 
 export default function Page() {
@@ -27,46 +29,46 @@ export default function Page() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchMedicos = async () => {
+    async function fetchMedicos() {
       try {
         setLoading(true);
         setError("");
+
         const data = await getJson<Medico[]>("/medicos");
         setMedicos(Array.isArray(data) ? data : []);
-      } catch (e: unknown) {
-        console.error("Erro ao carregar médicos:", e);
-        setError("Não foi possível carregar a lista de médicos.");
-        setMedicos([]);
+      } catch (err) {
+        console.error("Erro ao carregar médicos:", err);
+        setError("Não foi possível carregar os médicos.");
       } finally {
         setLoading(false);
       }
-    };
+    }
+
     fetchMedicos();
-  }, []);
+  }, [router]);
 
   const hasData = useMemo(() => medicos.length > 0, [medicos]);
 
   return (
     <main className="min-h-screen bg-gray-50 pt-16">
-      <div className="w-full max-w-6xl px-6 py-10 mx-auto">
+      <div className="max-w-6xl mx-auto px-6 py-10">
+        
+        {/* Header */}
         <div className="flex items-start justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold text-blue-700">Médicos</h1>
-            <p className="text-gray-600 mt-1">
-              Gerencie os médicos cadastrados.
-            </p>
+            <p className="text-gray-600 mt-1">Gerencie os médicos cadastrados.</p>
           </div>
 
-          <div>
-            <button
-              onClick={() => router.push("/medicos/novo")}
-              className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
-            >
-              + Novo Médico
-            </button>
-          </div>
+          <button
+            onClick={() => router.push("/medicos/novo")}
+            className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+          >
+            + Novo Médico
+          </button>
         </div>
 
+        {/* Tabela */}
         <div className="bg-white rounded-lg border shadow overflow-x-auto">
           {loading ? (
             <div className="p-6 text-center text-gray-600">Carregando…</div>
@@ -80,29 +82,33 @@ export default function Page() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Nome
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Especialidades
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
                     Ações
                   </th>
                 </tr>
               </thead>
+
               <tbody className="bg-white divide-y divide-gray-200">
                 {medicos.map((m) => {
-                  const espec = (m.especialidade ?? []).map((e) => e.nome);
-                  const especLabel = espec.length ? espec.join(", ") : "—";
+                  const especNomes =
+                    m.especialidades?.map((e) => e.nome).join(", ") || "—";
+
                   return (
                     <tr key={String(m.id)} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {m.nome}
                       </td>
+
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {especLabel}
+                        {especNomes}
                       </td>
+
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                         <button
                           onClick={() => router.push(`/medicos/${m.id}`)}

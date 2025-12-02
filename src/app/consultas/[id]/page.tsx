@@ -160,19 +160,18 @@ export default function Page() {
           {!isEditing ? (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <Display label="Data/Hora" value={new Date(consulta!.dataHora).toLocaleString("pt-BR")} />
-              <Display
-                label="Paciente"
-                value={pacientes.find((p) => String(p.id) === String(consulta!.pacienteId))?.nome ?? `#${consulta!.pacienteId}`}
-              />
-              <Display
-                label="Médico"
-                value={medicos.find((m) => String(m.id) === String(consulta!.medicoId))?.nome ?? `#${consulta!.medicoId}`}
-              />
-              <Display label="Motivo" value={consulta!.motivo ?? "—"} />
-              <Display label="Notas" value={consulta!.notas ?? "—"} full />
-            </div>
+                <Display label="Data/Hora" value={new Date(consulta!.dataHora).toLocaleString("pt-BR")} />
+                <Display
+                  label="Paciente"
+                  value={pacientes.find((p) => String(p.id) === String(consulta!.pacienteId))?.nome ?? `#${consulta!.pacienteId}`}
+                />
+                <Display
+                  label="Médico"
+                  value={medicos.find((m) => String(m.id) === String(consulta!.medicoId))?.nome ?? `#${consulta!.medicoId}`}
+                />
+                <Display label="Motivo" value={consulta!.motivo ?? "—"} />
+                <Display label="Notas" value={consulta!.notas ?? "—"} full />
+              </div>
 
               <div className="mt-6 border-t pt-6">
                 <h2 className="text-xl font-semibold text-gray-900">Prescrições</h2>

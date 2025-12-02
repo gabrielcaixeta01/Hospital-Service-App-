@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { getJson, api, deleteJson } from "../../../utils/api";
+import { getJson, deleteJson } from "../../../utils/api";
 import DoctorForm from "@/components/forms/DoctorForm";
 
 type IdLike = string | number;
@@ -18,23 +18,21 @@ interface MedicoAPI {
   crm?: string | null;
   email?: string | null;
   telefone?: string | null;
-  especialidade?: Especialidade[];
+
+  // CORRETO → o back retorna "especialidades"
+  especialidades?: Especialidade[];
 }
 
 export default function Page() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const id = params?.id;
+
   const [medico, setMedico] = useState<MedicoAPI | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState("");
 
-  const API_BASE =
-    process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ||
-    "http://localhost:4000/api/v1";
-
-  // Carrega o médico
   useEffect(() => {
     if (!id) return;
 
@@ -44,7 +42,6 @@ export default function Page() {
         setError("");
         const med = await getJson<MedicoAPI>(`/medicos/${id}`);
         setMedico(med);
-
       } catch (e: unknown) {
         console.error(e);
         setError((e as Error)?.message || "Erro ao carregar dados");
@@ -54,9 +51,7 @@ export default function Page() {
     };
 
     run();
-  }, [id, API_BASE]);
-
-
+  }, [id]);
 
   const handleDelete = async () => {
     if (!id) return;
@@ -113,7 +108,6 @@ export default function Page() {
           </div>
         </div>
 
-        {/* Modo edição: usa o Form reutilizável */}
         {isEditing ? (
           <DoctorForm
             mode="edit"
@@ -123,29 +117,32 @@ export default function Page() {
               crm: medico.crm ?? "",
               telefone: medico.telefone ?? "",
               email: medico.email ?? "",
-              especialidade: medico.especialidade ?? [],
+
+              // AQUI → agora usamos o nome real que o back usa
+              especialidades: medico.especialidades ?? [],
             }}
             onSuccess={() => router.push("/medicos")}
           />
         ) : (
-          // Modo leitura
           <div className="bg-white rounded-lg border p-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <Display label="Nome" value={medico.nome} />
               <Display label="CRM" value={medico.crm || "—"} />
               <Display label="Telefone" value={medico.telefone || "—"} />
               <Display label="Email" value={medico.email || "—"} />
+
               <Display
                 label="Especialidades"
                 value={
-                  (medico.especialidade ?? []).length
-                    ? (medico.especialidade ?? []).map((e) => e.nome).join(", ")
+                  (medico.especialidades ?? []).length
+                    ? (medico.especialidades ?? [])
+                        .map((e) => e.nome)
+                        .join(", ")
                     : "—"
                 }
                 full
               />
             </div>
-
 
             <div className="mt-6 pt-6 border-t flex justify-between">
               <button
@@ -162,7 +159,6 @@ export default function Page() {
   );
 }
 
-/* ----- helpers ----- */
 function Display({
   label,
   value,

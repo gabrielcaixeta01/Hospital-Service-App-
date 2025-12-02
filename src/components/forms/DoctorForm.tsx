@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { api, getJson, postJson } from "../../utils/api";
+import { getJson, postJson, api } from "../../utils/api";
 
 type IdLike = number | string;
 
@@ -11,7 +11,7 @@ export interface DoctorFormValues {
   crm?: string;
   telefone?: string;
   email?: string;
-  especialidadeIds?: IdLike[];
+  especialidadesIds?: number[];
 }
 
 interface Especialidade {
@@ -21,9 +21,14 @@ interface Especialidade {
 
 interface DoctorFormProps {
   mode?: "create" | "edit";
-  defaultValues?: Partial<DoctorFormValues> & {
+  defaultValues?: {
     id?: IdLike;
-    especialidade?: Especialidade[];
+    nome?: string;
+    crm?: string | null;
+    telefone?: string | null;
+    email?: string | null;
+
+    especialidades?: Especialidade[];
   };
   onSuccess?: () => void;
 }
@@ -35,16 +40,14 @@ export default function DoctorForm({
 }: DoctorFormProps) {
   const router = useRouter();
 
-  const API_BASE =
-    process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ||
-    "http://localhost:4000/api/v1";
-
   const [form, setForm] = useState<DoctorFormValues>({
     nome: defaultValues.nome || "",
     crm: defaultValues.crm || "",
     telefone: defaultValues.telefone || "",
     email: defaultValues.email || "",
-    especialidadeIds: (defaultValues.especialidade || []).map((e) => e.id),
+    especialidadesIds: (defaultValues.especialidades || []).map((e) =>
+      Number(e.id)
+    ),
   });
 
   const [especialidades, setEspecialidades] = useState<Especialidade[]>([]);
@@ -56,40 +59,47 @@ export default function DoctorForm({
     const load = async () => {
       try {
         setLoadingEsp(true);
-        setError("");
-        const headers: Record<string, string> = { "Content-Type": "application/json" };
-
         const data = await getJson<Especialidade[]>("/especialidades");
         setEspecialidades(data);
       } catch (err: unknown) {
         console.error(err);
-        setError((err as Error)?.message || "Erro ao carregar especialidades");
+        setError("Erro ao carregar especialidades");
       } finally {
         setLoadingEsp(false);
       }
     };
+
     load();
-  }, [API_BASE, router]);
+  }, []);
+
+  useEffect(() => {
+    setForm({
+      nome: defaultValues.nome || "",
+      crm: defaultValues.crm || "",
+      telefone: defaultValues.telefone || "",
+      email: defaultValues.email || "",
+      especialidadesIds: (defaultValues.especialidades || []).map((e) =>
+        Number(e.id)
+      ),
+    });
+  }, [defaultValues]);
 
   const hasEspecialidades = useMemo(
     () => especialidades.length > 0,
     [especialidades]
   );
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const toggleEspecialidade = (eid: IdLike) => {
+  const toggleEspecialidade = (id: IdLike) => {
     setForm((prev) => {
-      const list = prev.especialidadeIds ?? [];
-      const exists = list.includes(eid);
+      const num = Number(id);
+      const list = prev.especialidadesIds || [];
+      const exists = list.includes(num);
+
       return {
         ...prev,
-        especialidadeIds: exists ? list.filter((v) => v !== eid) : [...list, eid],
+        especialidadesIds: exists
+          ? list.filter((v) => v !== num)
+          : [...list, num],
       };
     });
   };
@@ -97,43 +107,37 @@ export default function DoctorForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+
     try {
+      const payload = {
+        nome: form.nome,
+        crm: form.crm || undefined,
+        telefone: form.telefone || undefined,
+        email: form.email || undefined,
+        especialidadesIds: (form.especialidadesIds || []).map(Number),
+      };
+
       if (mode === "create") {
-        await postJson("/medicos", {
-          nome: form.nome,
-          crm: form.crm || undefined,
-          telefone: form.telefone || undefined,
-          email: form.email || undefined,
-          especialidadeIds: (form.especialidadeIds ?? []).map((v) =>
-            typeof v === "string" ? Number(v) : v
-          ),
-        });
-        alert("Médico cadastrado com sucesso!");
+        await postJson("/medicos", payload);
+        alert("Médico criado com sucesso!");
       } else {
-        if (!defaultValues.id) {
+        if (!defaultValues.id)
           throw new Error("ID do médico não informado para edição.");
-        }
+
         const res = await api(`/medicos/${defaultValues.id}`, {
           method: "PATCH",
-          body: JSON.stringify({
-            nome: form.nome,
-            crm: form.crm || undefined,
-            telefone: form.telefone || undefined,
-            email: form.email || undefined,
-            replaceEspecialidadeIds: (form.especialidadeIds ?? []).map((v) =>
-              typeof v === "string" ? Number(v) : v
-            ),
-          }),
+          body: JSON.stringify(payload),
         });
+
         if (!res.ok) {
           const txt = await res.text();
-          throw new Error(txt || "Falha ao atualizar médico");
+          throw new Error(txt || "Erro ao atualizar médico");
         }
+
         alert("Médico atualizado com sucesso!");
       }
 
-      if (onSuccess) onSuccess();
-      else router.push("/medicos");
+      onSuccess ? onSuccess() : router.replace("/medicos"); router.refresh?.();
     } catch (err: unknown) {
       console.error(err);
       alert((err as Error)?.message || "Erro ao salvar médico");
@@ -152,38 +156,18 @@ export default function DoctorForm({
       </h2>
       <p className="text-gray-600 mb-6">
         {mode === "edit"
-          ? "Atualize os dados do médico no sistema."
-          : "Cadastre um novo médico no sistema."}
+          ? "Atualize os dados do médico."
+          : "Cadastre um novo médico."}
       </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Input
-          label="Nome"
-          name="nome"
-          value={form.nome}
-          onChange={handleChange}
-          required
-        />
-        <Input
-          label="CRM"
-          name="crm"
-          value={form.crm || ""}
-          onChange={handleChange}
-        />
+        <Input label="Nome" name="nome" value={form.nome} onChange={(e: { target: { value: any; }; }) => setForm({ ...form, nome: e.target.value })} required />
 
-        <Input
-          label="Telefone"
-          name="telefone"
-          value={form.telefone || ""}
-          onChange={handleChange}
-        />
-        <Input
-          label="Email"
-          name="email"
-          type="email"
-          value={form.email || ""}
-          onChange={handleChange}
-        />
+        <Input label="CRM" name="crm" value={form.crm || ""} onChange={(e: { target: { value: any; }; }) => setForm({ ...form, crm: e.target.value })} />
+
+        <Input label="Telefone" name="telefone" value={form.telefone || ""} onChange={(e: { target: { value: any; }; }) => setForm({ ...form, telefone: e.target.value })} />
+
+        <Input label="Email" name="email" type="email" value={form.email || ""} onChange={(e: { target: { value: any; }; }) => setForm({ ...form, email: e.target.value })} />
       </div>
 
       <div className="mt-4">
@@ -192,7 +176,7 @@ export default function DoctorForm({
         </div>
 
         {loadingEsp ? (
-          <div className="text-gray-600">Carregando especialidades…</div>
+          <div>Carregando especialidades…</div>
         ) : error ? (
           <div className="text-red-600">{error}</div>
         ) : !hasEspecialidades ? (
@@ -200,7 +184,9 @@ export default function DoctorForm({
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
             {especialidades.map((e) => {
-              const checked = (form.especialidadeIds ?? []).includes(e.id);
+              const checked =
+                form.especialidadesIds?.includes(Number(e.id)) || false;
+
               return (
                 <label
                   key={String(e.id)}
@@ -223,41 +209,24 @@ export default function DoctorForm({
         <button
           type="button"
           onClick={() => router.push("/medicos")}
-            className="px-4 py-2 border rounded hover:bg-gray-50"
+          className="px-4 py-2 border rounded hover:bg-gray-50"
         >
           Cancelar
         </button>
+
         <button
           type="submit"
           disabled={saving}
           className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
         >
-          {saving ? "Salvando..." : "Salvar"}
+          {saving ? "Salvando…" : "Salvar"}
         </button>
       </div>
     </form>
   );
 }
 
-/* ---------- UI helpers ---------- */
-
-interface InputProps {
-  label: string;
-  name: string;
-  value?: string | number;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
-  required?: boolean;
-  type?: string;
-}
-
-function Input({
-  label,
-  name,
-  value,
-  onChange,
-  required,
-  type = "text",
-}: InputProps) {
+function Input({ label, name, value, onChange, required, type = "text" }: any) {
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700">
