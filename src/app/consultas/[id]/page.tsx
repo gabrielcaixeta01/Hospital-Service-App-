@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getJson, api, deleteJson } from "@/utils/api";
+import PrescriptionForm from "@/components/forms/PrescriptionForm";
+import PrescriptionList from "@/components/PrescriptionList";
 
 type Id = number | string;
 interface Option { id: Id; nome: string; }
@@ -41,6 +43,7 @@ export default function Page() {
   const [saving, setSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false); // começa em modo "ver"
   const [error, setError] = useState("");
+  const [prescRefresh, setPrescRefresh] = useState(0);
 
   const hasData = useMemo(() => !!consulta, [consulta]);
 
@@ -155,6 +158,8 @@ export default function Page() {
 
         <div className="bg-white rounded-lg border p-6">
           {!isEditing ? (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <Display label="Data/Hora" value={new Date(consulta!.dataHora).toLocaleString("pt-BR")} />
               <Display
@@ -168,6 +173,13 @@ export default function Page() {
               <Display label="Motivo" value={consulta!.motivo ?? "—"} />
               <Display label="Notas" value={consulta!.notas ?? "—"} full />
             </div>
+
+              <div className="mt-6 border-t pt-6">
+                <h2 className="text-xl font-semibold text-gray-900">Prescrições</h2>
+                <PrescriptionList key={prescRefresh} consultaId={consulta!.id} onDeleted={() => setPrescRefresh((s) => s + 1)} />
+                <PrescriptionForm key={prescRefresh} consultaId={consulta!.id} onSuccess={() => setPrescRefresh((s) => s + 1)} />
+              </div>
+            </>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="Data/Hora">

@@ -133,6 +133,17 @@ export default function RelatoriosIndex() {
             Relatórios adicionais estarão disponíveis em breve.
           </p>
         </div>
+
+        {/* Internações Ativas - Detalhes */}
+        <Link href="/relatorios/internacoes-ativas" className="block">
+          <div className="rounded-2xl border bg-white p-5 shadow-sm hover:shadow-md transition">
+            <h3 className="text-lg font-semibold text-gray-800">Internações Ativas</h3>
+            <p className="mt-2 text-sm text-gray-500">Detalhes das internações ativas por leito, paciente e médico.</p>
+            <div className="mt-4 flex items-center gap-2">
+              <span className={badge.cls}>Abrir</span>
+            </div>
+          </div>
+        </Link>
       </div>
     </section>
   );

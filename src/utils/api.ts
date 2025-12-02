@@ -59,6 +59,13 @@ export async function postJson<T = any>(path: string, body?: any, init?: Request
   return res.json() as Promise<T>;
 }
 
+export async function postForm<T = any>(path: string, form: FormData, init?: RequestInit): Promise<T> {
+  const url = apiUrl(path.startsWith("/") ? path : `/${path}`);
+  const res = await fetch(url, { method: "POST", body: form, ...init });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json() as Promise<T>;
+}
+
 export async function patchJson<T = any>(path: string, body?: any, init?: RequestInit): Promise<T> {
   const res = await api(path, {
     method: "PATCH",

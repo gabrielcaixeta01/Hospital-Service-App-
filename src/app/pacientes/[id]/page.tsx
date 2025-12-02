@@ -153,6 +153,12 @@ export default function Page() {
                 >
                   Excluir
                 </button>
+                <button
+                  onClick={() => router.push(`/uploads/${id}`)}
+                  className="px-4 py-2 border rounded hover:bg-gray-50"
+                >
+                  Arquivos
+                </button>
               </>
             ) : (
               <>
