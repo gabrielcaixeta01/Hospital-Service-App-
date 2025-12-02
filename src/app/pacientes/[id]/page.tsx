@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { getJson, api, deleteJson } from "../../../utils/api";
+import Link from "next/link";
 
 type IdLike = string | number;
 
@@ -30,7 +31,8 @@ function dateOnlyToBR(iso?: string | null) {
 export default function Page() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
-  const id = params?.id;                  
+  const id = params?.id;
+
   const [paciente, setPaciente] = useState<Paciente | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -40,7 +42,7 @@ export default function Page() {
     process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ||
     "http://localhost:4000/api/v1";
 
-  // 🔹 Busca dados do paciente
+  // 🔹 Carrega o paciente
   useEffect(() => {
     if (!id) return;
 
@@ -53,7 +55,6 @@ export default function Page() {
           id: data.id,
           nome: data.nome,
           cpf: data.cpf,
-          // keep a date-only string (YYYY-MM-DD) to avoid timezone shifts when displaying
           dataNascimento: rawDate ? String(rawDate).split("T")[0] : "",
           sexo: data.sexo,
           telefone: data.telefone,
@@ -67,10 +68,11 @@ export default function Page() {
         setLoading(false);
       }
     };
+
     fetchPaciente();
   }, [id, API_BASE]);
 
-  // 🔹 Atualiza o estado conforme inputs
+  // 🔹 Atualização de inputs
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
@@ -81,7 +83,7 @@ export default function Page() {
     setPaciente({ ...paciente, [name]: value });
   };
 
-  // 🔹 Salvar alterações (PATCH)
+  // 🔹 Salvar edição
   const handleSave = async () => {
     if (!paciente) return;
     setSaving(true);
@@ -98,7 +100,9 @@ export default function Page() {
           observacoes: paciente.observacoes,
         }),
       });
+
       if (!res.ok) throw new Error("Falha ao salvar");
+
       setIsEditing(false);
       alert("Paciente atualizado com sucesso!");
     } catch (err) {
@@ -109,9 +113,10 @@ export default function Page() {
     }
   };
 
-  // 🔹 Excluir paciente
+  // 🔹 Excluir
   const handleDelete = async () => {
     if (!confirm("Deseja realmente excluir este paciente?")) return;
+
     try {
       await deleteJson(`/pacientes/${params.id}`);
       alert("Paciente excluído com sucesso!");
@@ -138,6 +143,7 @@ export default function Page() {
             </p>
           </div>
 
+          {/* 🔹 Botões de ação */}
           <div className="flex gap-2">
             {!isEditing ? (
               <>
@@ -147,18 +153,21 @@ export default function Page() {
                 >
                   Editar
                 </button>
+
                 <button
                   onClick={handleDelete}
                   className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
                 >
                   Excluir
                 </button>
-                <button
-                  onClick={() => router.push(`/uploads/${id}`)}
-                  className="px-4 py-2 border rounded hover:bg-gray-50"
+
+                {/* 🔥 BOTÃO CORRETO PARA ARQUIVOS CLÍNICOS */}
+                <Link
+                  href={`/pacientes/${id}/arquivos`}
+                  className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
                 >
-                  Arquivos
-                </button>
+                  Arquivos clínicos
+                </Link>
               </>
             ) : (
               <>
@@ -169,6 +178,7 @@ export default function Page() {
                 >
                   {saving ? "Salvando..." : "Salvar"}
                 </button>
+
                 <button
                   onClick={() => setIsEditing(false)}
                   className="px-4 py-2 border rounded hover:bg-gray-50"
@@ -180,6 +190,7 @@ export default function Page() {
           </div>
         </div>
 
+        {/* 🔹 Card de informações */}
         <div className="bg-white rounded-lg border p-6">
           {isEditing ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -189,12 +200,14 @@ export default function Page() {
                 value={paciente.nome}
                 onChange={handleChange}
               />
+
               <InputField
                 label="CPF"
                 name="cpf"
                 value={paciente.cpf || ""}
                 onChange={handleChange}
               />
+
               <InputField
                 label="Data de Nascimento"
                 name="dataNascimento"
@@ -202,6 +215,7 @@ export default function Page() {
                 value={paciente.dataNascimento || ""}
                 onChange={handleChange}
               />
+
               <SelectField
                 label="Sexo"
                 name="sexo"
@@ -214,12 +228,14 @@ export default function Page() {
                   { label: "Outro", value: "O" },
                 ]}
               />
+
               <InputField
                 label="Telefone"
                 name="telefone"
                 value={paciente.telefone || ""}
                 onChange={handleChange}
               />
+
               <InputField
                 label="Email"
                 name="email"
@@ -227,6 +243,7 @@ export default function Page() {
                 value={paciente.email || ""}
                 onChange={handleChange}
               />
+
               <TextareaField
                 label="Observações"
                 name="observacoes"
@@ -237,6 +254,7 @@ export default function Page() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <Display label="Nome" value={paciente.nome} />
+
               <Display
                 label="Data de Nascimento"
                 value={
@@ -245,6 +263,7 @@ export default function Page() {
                     : "—"
                 }
               />
+
               <Display
                 label="Sexo"
                 value={
@@ -257,8 +276,10 @@ export default function Page() {
                     : "—"
                 }
               />
+
               <Display label="Telefone" value={paciente.telefone || "—"} />
               <Display label="Email" value={paciente.email || "—"} />
+
               <Display
                 label="Observações"
                 value={paciente.observacoes || "—"}
@@ -281,7 +302,7 @@ export default function Page() {
   );
 }
 
-/* ---------- Subcomponentes reutilizáveis ---------- */
+/* ---------- Subcomponentes ---------- */
 
 interface InputFieldProps {
   label: string;
