@@ -3,11 +3,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getJson, api, deleteJson } from "@/utils/api";
-import PrescriptionForm from "@/components/forms/PrescriptionForm";
-import PrescriptionList from "@/components/PrescriptionList";
 
 type Id = number | string;
 interface Option { id: Id; nome: string; }
+
+interface Prescricao {
+  id: Id;
+  texto: string;
+}
+
 interface Consulta {
   id: Id;
   dataHora: string;   
@@ -16,11 +20,8 @@ interface Consulta {
   medicoId: Id;
   pacienteId: Id;
   especialidadeId?: Id | null;
+  prescricao?: Prescricao[];
 }
-
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ||
-  "http://localhost:4000/api/v1";
 
 function isoToLocalInput(iso: string) {
   if (!iso) return "";
@@ -43,9 +44,8 @@ export default function Page() {
   const [especialidades, setEspecialidades] = useState<Option[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [isEditing, setIsEditing] = useState(false); // começa em modo "ver"
+  const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState("");
-  const [prescRefresh, setPrescRefresh] = useState(0);
 
   const hasData = useMemo(() => !!consulta, [consulta]);
 
@@ -96,7 +96,7 @@ export default function Page() {
       const res = await api(`/consultas/${id}`, {
         method: "PATCH",
         body: JSON.stringify({
-          dataHora: consulta.dataHora, // já está em ISO
+          dataHora: consulta.dataHora, 
           motivo: consulta.motivo ?? undefined,
           notas: consulta.notas ?? undefined,
           medicoId: Number(consulta.medicoId),
@@ -186,8 +186,26 @@ export default function Page() {
               </div>
 
               <div className="mt-6 border-t pt-6">
-                <h2 className="text-xl font-semibold text-gray-900">Prescrições</h2>
-                <PrescriptionList key={prescRefresh} consultaId={consulta!.id} onDeleted={() => setPrescRefresh((s) => s + 1)} />
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-semibold text-gray-900">Prescrições</h2>
+                  <button
+                    onClick={() => router.push(`/prescricao/novo?consultaId=${consulta!.id}`)}
+                    className="px-3 py-1 bg-blue-600 text-white rounded"
+                  >
+                    Adicionar Prescrição
+                  </button>
+                </div>
+                  {consulta!.prescricao && consulta!.prescricao.length > 0 ? (
+                    <ul className="mt-4 space-y-2">
+                      {consulta!.prescricao.map((p) => (
+                        <li key={p.id} className="p-3 bg-gray-100 rounded">
+                          {p.texto}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-4 text-gray-600">Nenhuma prescrição registrada.</p>
+                  )}
               </div>
             </>
           ) : (
