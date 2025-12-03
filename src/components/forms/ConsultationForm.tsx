@@ -3,14 +3,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { isoUtcToLocalInput, localInputToIsoUtc } from "@/lib/datetime";
 import { useRouter } from "next/navigation";
-import { getJson, postJson, api } from "../../utils/api";
+import { getJson, postJson, api } from "@/utils/api";
 
 type IdLike = number | string;
 
 interface Option { id: IdLike; nome: string; }
 
 export interface ConsultationFormValues {
-  dataHora: string;     // "YYYY-MM-DDTHH:mm" (input)
+  dataHora: string; 
   motivo?: string;
   notas?: string;
   medicoId?: IdLike;
@@ -28,9 +28,6 @@ export default function ConsultationForm({
   onSuccess?: () => void;
 }) {
   const router = useRouter();
-  const API_BASE =
-    process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ||
-    "http://localhost:4000/api/v1";
 
   const [form, setForm] = useState<ConsultationFormValues>({
     dataHora: defaultValues.dataHora || "",
@@ -43,12 +40,12 @@ export default function ConsultationForm({
 
   const [medicos, setMedicos] = useState<Option[]>([]);
   const [pacientes, setPacientes] = useState<Option[]>([]);
-  const [especialidades, setEspecialidades] = useState<Option[]>([]);
+  const [especialidades, setEspecialidades] = useState<Option[]>([]); // all especialidades
+  const [filteredEspecialidades, setFilteredEspecialidades] = useState<Option[]>([]); // especialidades filtradas pelo médico
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
 
-  // catálogo
   useEffect(() => {
     const load = async () => {
       try {
@@ -57,11 +54,13 @@ export default function ConsultationForm({
         const [m, p, e] = await Promise.all([
           getJson<Option[]>("/medicos"),
           getJson<Option[]>("/pacientes"),
-          getJson<Option[]>("/especialidades"),
+          getJson<any>("/especialidades"),
         ]);
         setMedicos(m.map((x: Option) => ({ id: x.id, nome: x.nome })));
         setPacientes(p.map((x: Option) => ({ id: x.id, nome: x.nome })));
-        setEspecialidades(e.map((x: Option) => ({ id: x.id, nome: x.nome })));
+        const es: Option[] = (e || []).map((x: any) => ({ id: x.id, nome: x.nome }));
+        setEspecialidades(es);
+        setFilteredEspecialidades(es);
       } catch (e: unknown) {
         console.error(e);
         setErr(e instanceof Error ? e.message : String(e) || "Erro ao carregar listas");
@@ -70,14 +69,12 @@ export default function ConsultationForm({
       }
     };
     load();
-  }, [API_BASE]);
+  }, []);
 
-  // se veio ISO no defaultValues (edição), já renderiza no input local
   useEffect(() => {
     if (defaultValues.dataHora && defaultValues.dataHora.endsWith("Z")) {
       setForm((prev) => ({ ...prev, dataHora: isoUtcToLocalInput(defaultValues.dataHora!) }));
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const hasCatalogs = useMemo(() => medicos.length > 0 && pacientes.length > 0 && especialidades.length > 0, [medicos, pacientes, especialidades]);
@@ -207,9 +204,13 @@ export default function ConsultationForm({
                 required
               >
                 <option value="">Selecione…</option>
-                {especialidades.map((e) => (
-                  <option key={String(e.id)} value={String(e.id)}>{e.nome}</option>
-                ))}
+                {filteredEspecialidades.length === 0 ? (
+                  <option value="" disabled>Não há especialidades disponíveis</option>
+                ) : (
+                  filteredEspecialidades.map((e) => (
+                    <option key={String(e.id)} value={String(e.id)}>{e.nome}</option>
+                  ))
+                )}
               </select>
             </Field>
 
