@@ -7,10 +7,6 @@ import { getJson, postJson } from "../../../utils/api";
 interface Paciente { id: number; nome: string }
 interface Leito { id: number; codigo: string }
 
-const API_BASE =
-  (process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") as string) ||
-  "http://localhost:4000/api/v1";
-
 function toDatetimeLocal(now = new Date()) {
   const pad = (n: number) => String(n).padStart(2, "0");
   const yyyy = now.getFullYear();
@@ -78,7 +74,29 @@ export default function NovaInternacaoPage() {
       router.push(`/internacoes/${created.id}`);
     } catch (e) {
       console.error(e);
-      alert("Erro ao criar internação");
+      let msg = "Erro ao criar internação";
+      try {
+        if (e instanceof Error) {
+          const maybe = e.message;
+          try {
+            const parsed = JSON.parse(maybe);
+            if (parsed && parsed.message) msg = parsed.message;
+            else if (typeof maybe === "string" && maybe.trim()) msg = maybe;
+          } catch (_) {
+            if (maybe && maybe.trim()) msg = maybe;
+          }
+        } else if (typeof e === "string") {
+          try {
+            const parsed = JSON.parse(e);
+            if (parsed && parsed.message) msg = parsed.message;
+            else msg = e;
+          } catch (_) {
+            msg = e;
+          }
+        }
+      } catch (_) {
+      }
+      setError(msg);
     } finally {
       setSaving(false);
     }
