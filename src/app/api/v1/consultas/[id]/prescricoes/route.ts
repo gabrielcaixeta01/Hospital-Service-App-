@@ -19,6 +19,7 @@ async function writeData(data: any[]) {
 }
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
+  const { params } = context;
   const consultaId = Number(params.id);
   const data = await readData();
   const items = data.filter((p) => Number(p.consultaId) === consultaId);
@@ -26,6 +27,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
 }
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
+  const { params } = context;
   const consultaId = params.id;
   const body = await req.json().catch(() => ({}));
   const texto = String(body.texto ?? "").trim();

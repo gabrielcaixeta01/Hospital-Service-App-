@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../../utils/api";
 
-/* -------- Tipos mínimos -------- */
 type Consulta = { id: number; dataHora?: string | null; data?: string | null; medicoId?: number | null };
 type Internacao = { id: number; dataAlta?: string | null };
 type Leito = { id: number; status?: string | null };
@@ -29,7 +28,6 @@ export default function RelatoriosIndex() {
           api("/leitos"),
         ]);
 
-        // Consultas nos próximos 7 dias (usa dataHora, senão data)
         if (consRes.status === "fulfilled" && consRes.value.ok) {
           const cons: Consulta[] = await consRes.value.json();
           const now = new Date();
@@ -46,7 +44,6 @@ export default function RelatoriosIndex() {
           setConsultasProx7(null);
         }
 
-        // Leitos ocupados = internações sem alta
         if (intsRes.status === "fulfilled" && intsRes.value.ok) {
           const ints: Internacao[] = await intsRes.value.json();
           setLeitosOcupados(ints.filter((i) => !i.dataAlta).length);
@@ -54,13 +51,9 @@ export default function RelatoriosIndex() {
           setLeitosOcupados(null);
         }
 
-        // Total de leitos (e poderíamos também contar ocupados por status)
         if (leitosRes.status === "fulfilled" && leitosRes.value.ok) {
           const leitos: Leito[] = await leitosRes.value.json();
           setLeitosTotal(leitos.length);
-          // Se quiser derivar ocupados por status aqui, use:
-          // const ocup = leitos.filter(l => (l.status ?? "").toLowerCase() === "ocupado").length;
-          // setLeitosOcupados(ocup);
         } else {
           setLeitosTotal(null);
         }
@@ -125,14 +118,6 @@ export default function RelatoriosIndex() {
             </div>
           </div>
         </Link>
-
-        {/* Placeholder outros relatórios */}
-        <div className="rounded-2xl border bg-white p-5 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-800">Outros relatórios</h3>
-          <p className="mt-2 text-sm text-gray-500">
-            Relatórios adicionais estarão disponíveis em breve.
-          </p>
-        </div>
 
         {/* Internações Ativas - Detalhes */}
         <Link href="/relatorios/internacoes-ativas" className="block">
