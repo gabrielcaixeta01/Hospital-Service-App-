@@ -188,7 +188,6 @@ export default function Page() {
               <div className="mt-6 border-t pt-6">
                 <h2 className="text-xl font-semibold text-gray-900">Prescrições</h2>
                 <PrescriptionList key={prescRefresh} consultaId={consulta!.id} onDeleted={() => setPrescRefresh((s) => s + 1)} />
-                <PrescriptionForm key={prescRefresh} consultaId={consulta!.id} onSuccess={() => setPrescRefresh((s) => s + 1)} />
               </div>
             </>
           ) : (

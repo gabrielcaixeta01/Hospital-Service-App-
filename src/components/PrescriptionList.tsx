@@ -14,8 +14,22 @@ export default function PrescriptionList({ consultaId, onDeleted }: { consultaId
     (async () => {
       setLoading(true);
       try {
-        const data = await getJson<PrescricaoAPI[]>(`/consultas/${consultaId}/prescricoes`);
-        setLista(data);
+        // Use low-level `api` so we can handle 404/other non-ok responses
+        const res = await api(`/consultas/${consultaId}/prescricoes`, { method: "GET" });
+
+        if (res.status === 404) {
+          // no prescriptions endpoint or none found — treat as empty list
+          setLista([]);
+          return;
+        }
+
+        if (!res.ok) {
+          const txt = await res.text();
+          throw new Error(txt || `HTTP ${res.status}`);
+        }
+
+        const data = (await res.json()) as PrescricaoAPI[];
+        setLista(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error(err);
         setLista([]);
