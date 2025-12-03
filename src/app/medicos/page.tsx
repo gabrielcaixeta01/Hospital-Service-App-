@@ -18,7 +18,7 @@ interface Medico {
   email?: string | null;
   telefone?: string | null;
 
-  especialidades?: Especialidade[];
+  especialidade?: Especialidade[];
 }
 
 export default function Page() {
@@ -96,7 +96,7 @@ export default function Page() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {medicos.map((m) => {
                   const especNomes =
-                    m.especialidades?.map((e) => e.nome).join(", ") || "—";
+                    m.especialidade?.map((e) => e.nome).join(", ") || "—";
 
                   return (
                     <tr key={String(m.id)} className="hover:bg-gray-50">

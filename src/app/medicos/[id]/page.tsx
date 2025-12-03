@@ -19,7 +19,7 @@ interface MedicoAPI {
   email?: string | null;
   telefone?: string | null;
 
-  especialidades?: Especialidade[];
+  especialidade?: Especialidade[];
 }
 
 export default function Page() {
@@ -118,7 +118,7 @@ export default function Page() {
               email: medico.email ?? "",
 
               // AQUI → agora usamos o nome real que o back usa
-              especialidades: medico.especialidades ?? [],
+              especialidades: medico.especialidade ?? [],
             }}
             onSuccess={() => router.push("/medicos")}
           />
@@ -133,8 +133,8 @@ export default function Page() {
               <Display
                 label="Especialidades"
                 value={
-                  (medico.especialidades ?? []).length
-                    ? (medico.especialidades ?? [])
+                  (medico.especialidade ?? []).length
+                    ? (medico.especialidade ?? [])
                         .map((e) => e.nome)
                         .join(", ")
                     : "—"
