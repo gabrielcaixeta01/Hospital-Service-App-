@@ -19,7 +19,7 @@ type Leito = {
   id: number;
   codigo: string;
   status: string;
-  internacoes?: Internacao[];
+  internacao?: Internacao[];
 };
 
 interface CellProps {
@@ -60,7 +60,7 @@ export default function AdminPage() {
         const data = await getJson<Leito[]>("/leitos");
 
         const ajustado = data.map((l) => {
-          const ativa = l.internacoes && l.internacoes.some((i) => i.dataAlta === null);
+          const ativa = l.internacao && l.internacao.some((i) => i.dataAlta === null);
           return {
             ...l,
             status: ativa ? "ocupado" : l.status.toLowerCase(),
@@ -132,8 +132,8 @@ export default function AdminPage() {
       const atualizado = (await res.json()) as Leito;
 
       const ativa =
-        atualizado.internacoes &&
-        atualizado.internacoes.some((i) => i.dataAlta === null);
+        atualizado.internacao &&
+        atualizado.internacao.some((i) => i.dataAlta === null);
 
       const statusReal = ativa
         ? "ocupado"
@@ -226,7 +226,7 @@ export default function AdminPage() {
 
             <tbody className="bg-white divide-y divide-gray-200">
               {leitos.map((l) => {
-                const internacaoAtiva = l.internacoes?.find((i) => i.dataAlta === null);
+                const internacaoAtiva = l.internacao?.find((i) => i.dataAlta === null);
                 const paciente = internacaoAtiva?.paciente?.nome ?? "—";
 
                 return (
