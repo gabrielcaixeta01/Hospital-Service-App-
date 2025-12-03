@@ -78,5 +78,8 @@ export async function patchJson<T = any>(path: string, body?: any, init?: Reques
 
 export async function deleteJson(path: string, init?: RequestInit): Promise<void> {
   const res = await api(path, { method: "DELETE", ...init });
-  if (!res.ok) throw new Error(await res.text());
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(txt || `HTTP ${res.status} ${res.statusText}`);
+  }
 }

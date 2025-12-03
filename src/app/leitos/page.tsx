@@ -60,7 +60,7 @@ export default function AdminPage() {
         const data = await getJson<Leito[]>("/leitos");
 
         const ajustado = data.map((l) => {
-          const ativa = l.internacao && l.internacao.some((i) => i.dataAlta === null);
+          const ativa = l.internacao?.some((i) => i.dataAlta === null);
           return {
             ...l,
             status: ativa ? "ocupado" : l.status.toLowerCase(),
@@ -104,9 +104,10 @@ export default function AdminPage() {
       });
 
       setLeitos((prev) => [
-        { ...novo, status: "livre", internacoes: [] },
+        { ...novo, status: "livre", internacao: [] },
         ...prev,
       ]);
+
       setCodigo("");
     } catch (e) {
       console.error(e);
@@ -131,9 +132,7 @@ export default function AdminPage() {
 
       const atualizado = (await res.json()) as Leito;
 
-      const ativa =
-        atualizado.internacao &&
-        atualizado.internacao.some((i) => i.dataAlta === null);
+      const ativa = atualizado.internacao?.some((i) => i.dataAlta === null);
 
       const statusReal = ativa
         ? "ocupado"
@@ -142,7 +141,9 @@ export default function AdminPage() {
         : "livre";
 
       setLeitos((prev) =>
-        prev.map((x) => (x.id === leito.id ? { ...atualizado, status: statusReal } : x))
+        prev.map((x) =>
+          x.id === leito.id ? { ...atualizado, status: statusReal } : x
+        )
       );
     } catch (e) {
       console.error(e);
@@ -171,7 +172,6 @@ export default function AdminPage() {
         <div className="p-4 mb-4 text-red-700 bg-red-50 rounded">{err}</div>
       )}
 
-      {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-10">
         <KpiCard label="Total" value={kpis.total} />
         <KpiCard label="Livres" value={kpis.livre} />
@@ -179,7 +179,6 @@ export default function AdminPage() {
         <KpiCard label="Manutenção" value={kpis.manutencao} />
       </div>
 
-      {/* Criar Leito */}
       <div className="rounded-2xl border bg-white p-5 shadow mb-10">
         <h2 className="text-lg font-semibold mb-4">Adicionar Leito</h2>
 
@@ -204,7 +203,6 @@ export default function AdminPage() {
         </form>
       </div>
 
-      {/* Tabela */}
       <div className="rounded-2xl border bg-white p-5 shadow">
         <h2 className="text-lg font-semibold mb-4">Leitos Cadastrados</h2>
 
@@ -233,7 +231,6 @@ export default function AdminPage() {
                   <tr key={l.id} className="hover:bg-gray-50">
                     <Td>{l.codigo}</Td>
 
-                    {/* Status */}
                     <Td>
                       {l.status === "ocupado" && (
                         <span className="text-red-600 font-semibold">Ocupado</span>
@@ -246,12 +243,10 @@ export default function AdminPage() {
                       )}
                     </Td>
 
-                    {/* Paciente (truncate) */}
                     <Td>
                       <span className="block max-w-[180px] truncate">{paciente}</span>
                     </Td>
 
-                    {/* Switch */}
                     <Td align="center">
                       <div className="w-20 flex justify-center">
                         <Switch
@@ -265,7 +260,6 @@ export default function AdminPage() {
                       </div>
                     </Td>
 
-                    {/* Remover */}
                     <Td align="right">
                       <button
                         onClick={() => removerLeito(l)}
@@ -284,7 +278,6 @@ export default function AdminPage() {
     </section>
   );
 }
-
 
 function KpiCard({ label, value }: { label: string; value: number }) {
   return (
