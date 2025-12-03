@@ -3,23 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { getJson, postJson, api, deleteJson } from "../../utils/api";
 
-type Paciente = {
-  id: number;
-  nome: string;
-};
-
-type Internacao = {
-  id: number;
-  dataEntrada: string;
-  dataAlta: string | null;
-  paciente: Paciente;
-};
-
 type Leito = {
   id: number;
   codigo: string;
-  status: string;
-  internacao?: Internacao[];
+  status: string;        
+  pacienteNome: string | null;  
 };
 
 interface CellProps {
@@ -27,7 +15,15 @@ interface CellProps {
   align?: "left" | "right" | "center";
 }
 
-function Switch({ checked, onChange, disabled }: { checked: boolean; onChange: () => void; disabled?: boolean }) {
+function Switch({
+  checked,
+  onChange,
+  disabled,
+}: {
+  checked: boolean;
+  onChange: () => void;
+  disabled?: boolean;
+}) {
   return (
     <button
       type="button"
@@ -58,16 +54,7 @@ export default function AdminPage() {
         setErr("");
 
         const data = await getJson<Leito[]>("/leitos");
-
-        const ajustado = data.map((l) => {
-          const ativa = l.internacao?.some((i) => i.dataAlta === null);
-          return {
-            ...l,
-            status: ativa ? "ocupado" : l.status.toLowerCase(),
-          };
-        });
-
-        setLeitos(ajustado);
+        setLeitos(data);
       } catch (e) {
         console.error(e);
         setErr("Falha ao carregar leitos.");
@@ -82,7 +69,7 @@ export default function AdminPage() {
   const kpis = useMemo(() => {
     const acc = { total: leitos.length, livre: 0, ocupado: 0, manutencao: 0 };
     for (const l of leitos) {
-      const st = l.status.toLowerCase() as "livre" | "ocupado" | "manutencao";
+      const st = l.status as "livre" | "ocupado" | "manutencao";
       acc[st] += 1;
     }
     return acc;
@@ -100,14 +87,9 @@ export default function AdminPage() {
 
       const novo = await postJson<Leito>("/leitos", {
         codigo: codigo.trim(),
-        status: "livre",
       });
 
-      setLeitos((prev) => [
-        { ...novo, status: "livre", internacao: [] },
-        ...prev,
-      ]);
-
+      setLeitos((prev) => [novo, ...prev]);
       setCodigo("");
     } catch (e) {
       console.error(e);
@@ -132,18 +114,8 @@ export default function AdminPage() {
 
       const atualizado = (await res.json()) as Leito;
 
-      const ativa = atualizado.internacao?.some((i) => i.dataAlta === null);
-
-      const statusReal = ativa
-        ? "ocupado"
-        : atualizado.status.toLowerCase() === "manutencao"
-        ? "manutencao"
-        : "livre";
-
       setLeitos((prev) =>
-        prev.map((x) =>
-          x.id === leito.id ? { ...atualizado, status: statusReal } : x
-        )
+        prev.map((x) => (x.id === leito.id ? atualizado : x))
       );
     } catch (e) {
       console.error(e);
@@ -156,7 +128,6 @@ export default function AdminPage() {
 
     try {
       await deleteJson(`/leitos/${leito.id}`);
-
       setLeitos((prev) => prev.filter((l) => l.id !== leito.id));
     } catch (e) {
       console.error(e);
@@ -166,7 +137,9 @@ export default function AdminPage() {
 
   return (
     <section className="max-w-6xl mx-auto px-6 py-8">
-      <h1 className="text-3xl font-bold text-blue-700 mb-4">Gerencie os Leitos</h1>
+      <h1 className="text-3xl font-bold text-blue-700 mb-4">
+        Gerencie os Leitos
+      </h1>
 
       {err && (
         <div className="p-4 mb-4 text-red-700 bg-red-50 rounded">{err}</div>
@@ -209,7 +182,9 @@ export default function AdminPage() {
         {loading ? (
           <div className="p-4 text-center">Carregando…</div>
         ) : leitos.length === 0 ? (
-          <div className="p-4 text-center text-gray-500">Nenhum leito cadastrado.</div>
+          <div className="p-4 text-center text-gray-500">
+            Nenhum leito cadastrado.
+          </div>
         ) : (
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -223,54 +198,52 @@ export default function AdminPage() {
             </thead>
 
             <tbody className="bg-white divide-y divide-gray-200">
-              {leitos.map((l) => {
-                const internacaoAtiva = l.internacao?.find((i) => i.dataAlta === null);
-                const paciente = internacaoAtiva?.paciente?.nome ?? "—";
+              {leitos.map((l) => (
+                <tr key={l.id} className="hover:bg-gray-50">
+                  <Td>{l.codigo}</Td>
 
-                return (
-                  <tr key={l.id} className="hover:bg-gray-50">
-                    <Td>{l.codigo}</Td>
+                  <Td>
+                    {l.status === "ocupado" && (
+                      <span className="text-red-600 font-semibold">Ocupado</span>
+                    )}
+                    {l.status === "livre" && (
+                      <span className="text-green-600 font-semibold">
+                        Livre
+                      </span>
+                    )}
+                    {l.status === "manutencao" && (
+                      <span className="text-yellow-600 font-semibold">
+                        Manutenção
+                      </span>
+                    )}
+                  </Td>
 
-                    <Td>
-                      {l.status === "ocupado" && (
-                        <span className="text-red-600 font-semibold">Ocupado</span>
-                      )}
-                      {l.status === "livre" && (
-                        <span className="text-green-600 font-semibold">Livre</span>
-                      )}
-                      {l.status === "manutencao" && (
-                        <span className="text-yellow-600 font-semibold">Manutenção</span>
-                      )}
-                    </Td>
+                  <Td>
+                    <span className="block max-w-[180px] truncate">
+                      {l.pacienteNome ?? "—"}
+                    </span>
+                  </Td>
 
-                    <Td>
-                      <span className="block max-w-[180px] truncate">{paciente}</span>
-                    </Td>
+                  <Td align="center">
+                    <div className="w-20 flex justify-center">
+                      <Switch
+                        checked={l.status === "manutencao"}
+                        disabled={l.status === "ocupado"}
+                        onChange={() => toggleManutencao(l)}
+                      />
+                    </div>
+                  </Td>
 
-                    <Td align="center">
-                      <div className="w-20 flex justify-center">
-                        <Switch
-                          checked={l.status === "manutencao"}
-                          disabled={l.status === "ocupado"}
-                          onChange={() => {
-                            if (l.status === "ocupado") return;
-                            toggleManutencao(l);
-                          }}
-                        />
-                      </div>
-                    </Td>
-
-                    <Td align="right">
-                      <button
-                        onClick={() => removerLeito(l)}
-                        className="px-3 py-1 text-sm rounded border border-red-300 text-red-700 hover:bg-red-50"
-                      >
-                        Remover
-                      </button>
-                    </Td>
-                  </tr>
-                );
-              })}
+                  <Td align="right">
+                    <button
+                      onClick={() => removerLeito(l)}
+                      className="px-3 py-1 text-sm rounded border border-red-300 text-red-700 hover:bg-red-50"
+                    >
+                      Remover
+                    </button>
+                  </Td>
+                </tr>
+              ))}
             </tbody>
           </table>
         )}

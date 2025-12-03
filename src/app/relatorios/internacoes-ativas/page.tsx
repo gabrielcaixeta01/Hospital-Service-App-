@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { api } from "../../../utils/api";
+import { api } from "@/utils/api";
 
 type InternacaoDetalhe = {
   internacaoId: number;
@@ -10,10 +10,6 @@ type InternacaoDetalhe = {
   leitoId?: number | null;
   leitoCodigo?: string | null;
   dataEntrada?: string | null;
-  dataPrevistaAlta?: string | null;
-  medicoId?: number | null;
-  medicoNome?: string | null;
-  setor?: string | null;
   observacoes?: string | null;
 };
 
@@ -62,9 +58,6 @@ export default function InternacoesAtivasDetalhes() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paciente</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Leito</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Entrada</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prev. Alta</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Médico</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Setor</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y">
@@ -74,9 +67,6 @@ export default function InternacoesAtivasDetalhes() {
                   <td className="px-6 py-4 whitespace-nowrap">{r.pacienteNome ?? `#${r.pacienteId}`}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{r.leitoCodigo ?? `#${r.leitoId ?? '-'}`}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{r.dataEntrada ? new Date(r.dataEntrada).toLocaleString() : '-'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{r.dataPrevistaAlta ? new Date(r.dataPrevistaAlta).toLocaleDateString() : '-'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{r.medicoNome ?? `#${r.medicoId ?? '-'}`}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{r.setor ?? '-'}</td>
                 </tr>
               ))}
             </tbody>

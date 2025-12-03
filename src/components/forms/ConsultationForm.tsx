@@ -40,11 +40,39 @@ export default function ConsultationForm({
 
   const [medicos, setMedicos] = useState<Option[]>([]);
   const [pacientes, setPacientes] = useState<Option[]>([]);
-  const [especialidades, setEspecialidades] = useState<Option[]>([]); // all especialidades
-  const [filteredEspecialidades, setFilteredEspecialidades] = useState<Option[]>([]); // especialidades filtradas pelo médico
+  const [especialidades, setEspecialidades] = useState<Option[]>([]); 
+  const [filteredEspecialidades, setFilteredEspecialidades] = useState<Option[]>([]); 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
+
+  useEffect(() => {
+    if (!form.medicoId) {
+      setFilteredEspecialidades([]);
+      setForm((prev) => ({ ...prev, especialidadeId: "" }));
+      return;
+    }
+
+    const loadEspecialidadesDoMedico = async () => {
+      try {
+        const med: any = await getJson(`/medicos/${form.medicoId}`);
+        const especs: any[] = med?.especialidade || med?.especialidades || [];
+        setFilteredEspecialidades(especs);
+        if (especs.length === 0) {
+          setForm((prev) => ({ ...prev, especialidadeId: "" }));
+        } else {
+          if (!especs.some((e: any) => String(e.id) === String(form.especialidadeId))) {
+            setForm((prev) => ({ ...prev, especialidadeId: "" }));
+          }
+        }
+      } catch (e) {
+        console.error(e);
+        setFilteredEspecialidades([]);
+      }
+    };
+
+    loadEspecialidadesDoMedico();
+  }, [form.medicoId]);
 
   useEffect(() => {
     const load = async () => {
@@ -88,7 +116,7 @@ export default function ConsultationForm({
     e.preventDefault();
     setSaving(true);
     try {
-      const iso = localInputToIsoUtc(form.dataHora); // garante Z/UTC
+      const iso = localInputToIsoUtc(form.dataHora);
       if (!iso) throw new Error("Data/hora inválida");
 
       const payload = {
@@ -200,18 +228,23 @@ export default function ConsultationForm({
                 name="especialidadeId"
                 value={form.especialidadeId ?? ""}
                 onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border disabled:bg-gray-100 disabled:text-gray-500"
                 required
+                disabled={filteredEspecialidades.length === 0}
               >
                 <option value="">Selecione…</option>
-                {filteredEspecialidades.length === 0 ? (
-                  <option value="" disabled>Não há especialidades disponíveis</option>
-                ) : (
-                  filteredEspecialidades.map((e) => (
-                    <option key={String(e.id)} value={String(e.id)}>{e.nome}</option>
-                  ))
-                )}
+                {filteredEspecialidades.map((e) => (
+                  <option key={String(e.id)} value={String(e.id)}>
+                    {e.nome}
+                  </option>
+                ))}
               </select>
+
+              {filteredEspecialidades.length === 0 && form.medicoId && (
+                <p className="text-red-600 text-sm mt-1">
+                  Esse médico não possui especialidades cadastradas.
+                </p>
+              )}
             </Field>
 
             <div className="sm:col-span-2">

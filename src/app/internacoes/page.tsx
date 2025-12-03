@@ -67,7 +67,7 @@ export default function InternacoesList() {
   return (
     <div className="container mx-auto p-20">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Internações</h1>
+        <h1 className="text-2xl font-bold">Histórico de Internações</h1>
         <button
           type="button"
           onClick={() => router.push("/internacoes/novo")}
