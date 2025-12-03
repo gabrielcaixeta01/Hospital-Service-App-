@@ -15,6 +15,7 @@ export interface ConsultationFormValues {
   notas?: string;
   medicoId?: IdLike;
   pacienteId?: IdLike;
+  especialidadeId?: IdLike;
 }
 
 export default function ConsultationForm({
@@ -37,10 +38,12 @@ export default function ConsultationForm({
     notas: defaultValues.notas || "",
     medicoId: defaultValues.medicoId ?? undefined,
     pacienteId: defaultValues.pacienteId ?? undefined,
+    especialidadeId: defaultValues.especialidadeId ?? undefined,
   });
 
   const [medicos, setMedicos] = useState<Option[]>([]);
   const [pacientes, setPacientes] = useState<Option[]>([]);
+  const [especialidades, setEspecialidades] = useState<Option[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
@@ -51,12 +54,14 @@ export default function ConsultationForm({
       try {
         setLoading(true);
         setErr("");
-        const [m, p] = await Promise.all([
+        const [m, p, e] = await Promise.all([
           getJson<Option[]>("/medicos"),
           getJson<Option[]>("/pacientes"),
+          getJson<Option[]>("/especialidades"),
         ]);
         setMedicos(m.map((x: Option) => ({ id: x.id, nome: x.nome })));
         setPacientes(p.map((x: Option) => ({ id: x.id, nome: x.nome })));
+        setEspecialidades(e.map((x: Option) => ({ id: x.id, nome: x.nome })));
       } catch (e: unknown) {
         console.error(e);
         setErr(e instanceof Error ? e.message : String(e) || "Erro ao carregar listas");
@@ -75,7 +80,7 @@ export default function ConsultationForm({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const hasCatalogs = useMemo(() => medicos.length > 0 && pacientes.length > 0, [medicos, pacientes]);
+  const hasCatalogs = useMemo(() => medicos.length > 0 && pacientes.length > 0 && especialidades.length > 0, [medicos, pacientes, especialidades]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -95,6 +100,7 @@ export default function ConsultationForm({
         notas: form.notas || undefined,
         medicoId: typeof form.medicoId === "string" ? Number(form.medicoId) : form.medicoId,
         pacienteId: typeof form.pacienteId === "string" ? Number(form.pacienteId) : form.pacienteId,
+        especialidadeId: typeof form.especialidadeId === "string" ? Number(form.especialidadeId) : form.especialidadeId,
       };
 
       const method = mode === "edit" ? "PATCH" : "POST";
@@ -190,6 +196,21 @@ export default function ConsultationForm({
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
                 maxLength={255}
               />
+            </Field>
+
+            <Field label="Especialidade">
+              <select
+                name="especialidadeId"
+                value={form.especialidadeId ?? ""}
+                onChange={handleChange}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
+                required
+              >
+                <option value="">Selecione…</option>
+                {especialidades.map((e) => (
+                  <option key={String(e.id)} value={String(e.id)}>{e.nome}</option>
+                ))}
+              </select>
             </Field>
 
             <div className="sm:col-span-2">
