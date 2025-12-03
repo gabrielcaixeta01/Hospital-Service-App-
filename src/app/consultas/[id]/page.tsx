@@ -15,6 +15,7 @@ interface Consulta {
   notas?: string | null;
   medicoId: Id;
   pacienteId: Id;
+  especialidadeId?: Id | null;
 }
 
 const API_BASE =
@@ -39,6 +40,7 @@ export default function Page() {
   const [consulta, setConsulta] = useState<Consulta | null>(null);
   const [pacientes, setPacientes] = useState<Option[]>([]);
   const [medicos, setMedicos] = useState<Option[]>([]);
+  const [especialidades, setEspecialidades] = useState<Option[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false); // começa em modo "ver"
@@ -52,10 +54,11 @@ export default function Page() {
     (async () => {
       try {
         setLoading(true);
-        const [c, p, m] = await Promise.all([
+        const [c, p, m, e] = await Promise.all([
           getJson<Consulta>(`/consultas/${id}`),
           getJson<Option[]>("/pacientes"),
           getJson<Option[]>("/medicos"),
+          getJson<Option[]>("/especialidades"),
         ]);
         setConsulta(c);
         setPacientes((Array.isArray(p) ? p : []).map((x: unknown) => {
@@ -63,6 +66,10 @@ export default function Page() {
           return { id: item.id, nome: item.nome };
         }));
         setMedicos((Array.isArray(m) ? m : []).map((x: unknown) => {
+          const item = x as { id: Id; nome: string };
+          return { id: item.id, nome: item.nome };
+        }));
+        setEspecialidades((Array.isArray(e) ? e : []).map((x: unknown) => {
           const item = x as { id: Id; nome: string };
           return { id: item.id, nome: item.nome };
         }));
@@ -94,6 +101,7 @@ export default function Page() {
           notas: consulta.notas ?? undefined,
           medicoId: Number(consulta.medicoId),
           pacienteId: Number(consulta.pacienteId),
+          especialidadeId: consulta.especialidadeId ? Number(consulta.especialidadeId) : undefined,
         }),
       });
       if (!res.ok) throw new Error(await res.text());
@@ -169,6 +177,10 @@ export default function Page() {
                   label="Médico"
                   value={medicos.find((m) => String(m.id) === String(consulta!.medicoId))?.nome ?? `#${consulta!.medicoId}`}
                 />
+                <Display
+                  label="Especialidade"
+                  value={especialidades.find((e) => String(e.id) === String(consulta!.especialidadeId))?.nome ?? "—"}
+                />
                 <Display label="Motivo" value={consulta!.motivo ?? "—"} />
                 <Display label="Notas" value={consulta!.notas ?? "—"} full />
               </div>
@@ -229,6 +241,22 @@ export default function Page() {
                   onChange={handleChange}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
                 />
+              </Field>
+
+              <Field label="Especialidade">
+                <select
+                  name="especialidadeId"
+                  value={String(consulta!.especialidadeId ?? "")}
+                  onChange={handleChange}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
+                >
+                  <option value="">Selecione…</option>
+                  {especialidades.map((e) => (
+                    <option key={String(e.id)} value={String(e.id)}>
+                      {e.nome}
+                    </option>
+                  ))}
+                </select>
               </Field>
 
               <Field label="Notas">
