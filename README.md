@@ -3,20 +3,6 @@
 Aplicação front-end desenvolvida em Next.js para o sistema de gestão hospitalar.  
 Interface moderna, responsiva e integrada à API REST do back-end.
 
-## Tecnologias Utilizadas
-
-- Next.js 14
-- React
-- TypeScript
-- Tailwind CSS
-- Fetch API para comunicação com o back-end
-- Context API (autenticação e controle de usuário)
-
-## Pré-requisitos
-
-- Node.js 18+
-- npm ou yarn
-- API do back-end em execução
 
 ## Configuração do Ambiente
 
@@ -75,13 +61,9 @@ npm run start   # inicia produção
 
 - `NEXT_PUBLIC_API_URL` – URL base da API
 
-## Autenticação
-
-A autenticação funciona via token JWT armazenado no `localStorage`, enviado automaticamente via cabeçalho Authorization.
 
 ## Estilo e UI
 
 - Layout responsivo com Tailwind
 - Componentes reutilizáveis (cards, tabela, navbar moderna)
-- Suporte a light/dark mode embutido (via classes Tailwind, quando habilitado)
 
