@@ -1,11 +1,12 @@
 "use client";
+export const dynamic = 'force-dynamic';
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import PrescriptionForm from "@/components/forms/PrescriptionForm";
 
 export default function Page() {
   const router = useRouter();
-  const search = useSearchParams();
+  const search = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams("");
   const consultaId = search.get("consultaId") ?? undefined;
 
   if (!consultaId) {
